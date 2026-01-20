@@ -1,0 +1,4 @@
+openpyxl==3.1.5
+sv-ttk==2.6.1
+darkdetect==0.8.0
+pyinstaller==6.18.0
