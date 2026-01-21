@@ -174,16 +174,12 @@ class ContactCleanerApp(tk.Tk):
                 for row in result.comparison_data:
                     if row["변환됨"]:
                         all_transformed.append(
-                            {"이름": row["이름"], "변환됨": row["변환됨"], "검증": ""}
+                            {"이름": row["이름"], "변환됨": row["변환됨"]}
                         )
 
-            seen_phones = set()
-            merged_data = []
-            for item in all_transformed:
-                phone = item["변환됨"]
-                if phone not in seen_phones:
-                    seen_phones.add(phone)
-                    merged_data.append(item)
+            merged_data = self._merge_and_deduplicate(all_transformed, [])
+            for item in merged_data:
+                item["검증"] = ""
 
             output_path = create_output_structure("병합", "변환")
             save_styled_excel(merged_data, output_path)
