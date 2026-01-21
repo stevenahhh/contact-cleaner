@@ -277,6 +277,9 @@ class ContactCleanerApp(tk.Tk):
             phone_match_indices = []
 
             for right_idx, right_item in enumerate(right_data):
+                if right_idx in matched_right_indices:
+                    continue
+                
                 right_name = right_item["이름"].strip()
                 right_phone = right_item["변환됨"]
 
