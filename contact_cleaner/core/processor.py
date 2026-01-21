@@ -38,45 +38,48 @@ class ContactProcessor:
         for row in rows:
             name = row.get(name_col, "").strip() if name_col else ""
 
-            original_phone = ""
-            normalized_phone = None
-
-            if phone_col and row.get(phone_col, "").strip():
-                original_phone = row.get(phone_col, "").strip()
-                result = normalize_phone_number(original_phone)
-                if result.status == "valid":
-                    normalized_phone = result.normalized
-
-            if not normalized_phone:
-                normalized_phone = self._find_valid_phone_in_other_columns(
-                    row, phone_col
-                )
-                if normalized_phone and not original_phone:
-                    original_phone = normalized_phone
-
-            original_data.append(
-                {
-                    "이름": name,
-                    "원본 전화번호": original_phone,
-                }
-            )
-
-            if name and normalized_phone:
-                transformed_data.append(
+            all_phones = self._find_all_valid_phones_in_row(row)
+            
+            if not all_phones:
+                original_data.append(
                     {
                         "이름": name,
-                        "변환됨": normalized_phone,
+                        "원본 전화번호": "",
                     }
                 )
+                comparison_data.append(
+                    {
+                        "이름": name,
+                        "원본 전화번호": "",
+                        "변환됨": "",
+                        "검증": "",
+                    }
+                )
+            else:
+                for phone in all_phones:
+                    original_data.append(
+                        {
+                            "이름": name,
+                            "원본 전화번호": phone,
+                        }
+                    )
 
-            comparison_data.append(
-                {
-                    "이름": name,
-                    "원본 전화번호": original_phone,
-                    "변환됨": normalized_phone or "",
-                    "검증": "",
-                }
-            )
+                    if name and phone:
+                        transformed_data.append(
+                            {
+                                "이름": name,
+                                "변환됨": phone,
+                            }
+                        )
+
+                    comparison_data.append(
+                        {
+                            "이름": name,
+                            "원본 전화번호": phone,
+                            "변환됨": phone,
+                            "검증": "",
+                        }
+                    )
 
         return ProcessResult(
             original_data=original_data,
@@ -87,6 +90,18 @@ class ContactProcessor:
             detected_name_col=name_col,
             encoding=encoding,
         )
+
+    def _find_all_valid_phones_in_row(self, row: dict) -> list[str]:
+        phones = []
+        seen = set()
+        for header, value in row.items():
+            value = str(value).strip()
+            if value:
+                result = normalize_phone_number(value)
+                if result.status == "valid" and result.normalized not in seen:
+                    phones.append(result.normalized)
+                    seen.add(result.normalized)
+        return phones
 
     def _find_valid_phone_in_other_columns(
         self, row: dict, skip_col: Optional[str]
