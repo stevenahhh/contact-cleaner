@@ -59,7 +59,13 @@ class ColumnDetector:
         ws = wb.active
 
         rows_iter = ws.iter_rows(values_only=True)
-        header_row = next(rows_iter, None)
+        first_row = next(rows_iter, None)
+        
+        # 첫 행이 비어있으면 (정리 결과 파일), 다음 행을 헤더로 사용
+        if first_row and all(cell is None or str(cell).strip() == '' for cell in first_row):
+            header_row = next(rows_iter, None)
+        else:
+            header_row = first_row
 
         if header_row:
             self._headers = [
