@@ -256,13 +256,20 @@ class ContactCleanerApp(tk.Tk):
     def _merge_and_deduplicate(
         self, left_data: list[dict], right_data: list[dict]
     ) -> list[dict]:
+        import re
+        
+        def clean_name(name: str) -> str:
+            name = name.strip()
+            name = re.sub(r'[\d\-\+\(\)\s]+', '', name)
+            return name
+        
         result = []
         matched_right_indices = set()
 
         for idx, left_item in enumerate(left_data):
             left_name = left_item["이름"].strip()
             left_phone = left_item["변환됨"]
-            left_name_clean = left_name.replace(" ", "")
+            left_name_clean = clean_name(left_name)
 
             name_match_found = False
             phone_match_indices = []
@@ -272,10 +279,10 @@ class ContactCleanerApp(tk.Tk):
                 right_phone = right_item["변환됨"]
 
                 if left_phone == right_phone:
-                    right_name_clean = right_name.replace(" ", "")
+                    right_name_clean = clean_name(right_name)
                     if (
-                        left_name_clean in right_name_clean
-                        or right_name_clean in left_name_clean
+                        left_name_clean and right_name_clean and 
+                        (left_name_clean in right_name_clean or right_name_clean in left_name_clean)
                     ):
                         result.append(
                             {
