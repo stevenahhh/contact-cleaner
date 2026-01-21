@@ -69,16 +69,14 @@ class ContactProcessor:
                     }
                 )
 
-            status = self._determine_status(original_phone, normalized_phone)
             comparison_data.append(
                 {
                     "이름": name,
                     "원본 전화번호": original_phone,
                     "변환됨": normalized_phone or "",
-                    "검증": status,
+                    "검증": "",
                 }
             )
-            stats[status] += 1
 
         return ProcessResult(
             original_data=original_data,
