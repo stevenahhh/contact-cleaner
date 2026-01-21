@@ -116,7 +116,16 @@ class ContactProcessor:
         ws = wb.active
 
         rows_iter = ws.iter_rows(values_only=True)
-        header_row = next(rows_iter, None)
+        first_row = next(rows_iter, None)
+        
+        if not first_row:
+            wb.close()
+            return []
+        
+        if all(cell is None or str(cell).strip() == '' for cell in first_row):
+            header_row = next(rows_iter, None)
+        else:
+            header_row = first_row
 
         if not header_row:
             wb.close()
