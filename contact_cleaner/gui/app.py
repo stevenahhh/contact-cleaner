@@ -31,7 +31,7 @@ class ContactCleanerApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("주소록 정리 v1.2.0")
+        self.title("주소록 정리 v1.3.0")
         self.geometry("900x800")
         self.minsize(800, 600)
 
@@ -51,43 +51,15 @@ class ContactCleanerApp(tk.Tk):
         main_container = ttk.Frame(self, padding=20)
         main_container.pack(fill=tk.BOTH, expand=True)
 
-        lists_container = ttk.Frame(main_container)
-        lists_container.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+        self.notebook = ttk.Notebook(main_container)
+        self.notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
 
-        self.source_list = FileListFrame(
-            lists_container, title="1. 정리할 원본 파일", on_add=self.add_source_files
-        )
-        self.source_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-
-        self.target_list = FileListFrame(
-            lists_container,
-            title="2. 대조 대상 파일 (선택)",
-            on_add=self.add_target_files,
-        )
-        self.target_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self._setup_clean_tab()
+        self._setup_compare_tab()
+        self._setup_merge_tab()
 
         self.log_view = LogFrame(main_container)
         self.log_view.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
-
-        btn_container = ttk.Frame(main_container)
-        btn_container.pack(fill=tk.X, pady=(0, 15))
-
-        self.clean_btn = ttk.Button(
-            btn_container,
-            text="주소록 정리 시작",
-            style="Accent.TButton",
-            command=self.start_cleaning,
-        )
-        self.clean_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), ipady=5)
-
-        self.compare_btn = ttk.Button(
-            btn_container,
-            text="데이터 대조 시작",
-            command=self.start_comparison,
-        )
-        self.compare_btn.pack(
-            side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0), ipady=5
-        )
 
         bottom_frame = ttk.Frame(main_container)
         bottom_frame.pack(fill=tk.X)
@@ -99,9 +71,82 @@ class ContactCleanerApp(tk.Tk):
         self.progress.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         v_label = ttk.Label(
-            self, text="v1.1.4", font=self.version_font, foreground="#888888"
+            self, text="v1.3.0", font=self.version_font, foreground="#888888"
         )
         v_label.place(relx=1.0, rely=1.0, x=-10, y=-5, anchor="se")
+
+    def _setup_clean_tab(self):
+        clean_tab = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(clean_tab, text="정리")
+
+        self.source_list = FileListFrame(
+            clean_tab, title="정리할 원본 파일", on_add=self.add_source_files
+        )
+        self.source_list.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        self.clean_btn = ttk.Button(
+            clean_tab,
+            text="주소록 정리 시작",
+            style="Accent.TButton",
+            command=self.start_cleaning,
+        )
+        self.clean_btn.pack(fill=tk.X, ipady=5)
+
+    def _setup_compare_tab(self):
+        compare_tab = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(compare_tab, text="대조")
+
+        lists_container = ttk.Frame(compare_tab)
+        lists_container.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        self.compare_source_list = FileListFrame(
+            lists_container, title="정리할 원본 파일", on_add=self.add_compare_source_files
+        )
+        self.compare_source_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+
+        self.target_list = FileListFrame(
+            lists_container,
+            title="대조 대상 파일",
+            on_add=self.add_target_files,
+        )
+        self.target_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.compare_btn = ttk.Button(
+            compare_tab,
+            text="데이터 대조 시작",
+            style="Accent.TButton",
+            command=self.start_comparison,
+        )
+        self.compare_btn.pack(fill=tk.X, ipady=5)
+
+    def _setup_merge_tab(self):
+        merge_tab = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(merge_tab, text="병합")
+
+        info_frame = ttk.Frame(merge_tab)
+        info_frame.pack(fill=tk.X, pady=(0, 10))
+
+        info_text = ttk.Label(
+            info_frame,
+            text='※ 파일명을 "주소록_{주인이름}_대조결과.xlsx" 형식으로 수정하세요!\n   예: 대조결과_260121.xlsx → 주소록_양선아_대조결과.xlsx',
+            foreground="#FF6600",
+            font=self.small_font,
+            justify=tk.LEFT
+        )
+        info_text.pack(anchor=tk.W)
+
+        self.merge_list = FileListFrame(
+            merge_tab, title="병합할 파일 목록", on_add=self.add_merge_files
+        )
+        self.merge_list.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        self.merge_btn = ttk.Button(
+            merge_tab,
+            text="병합 시작",
+            style="Accent.TButton",
+            command=self.start_merge,
+        )
+        self.merge_btn.pack(fill=tk.X, ipady=5)
 
     def add_source_files(self):
         filenames = filedialog.askopenfilenames(
@@ -111,6 +156,14 @@ class ContactCleanerApp(tk.Tk):
             self.source_list.add_files(list(filenames))
             self.log_view.log(f"정리할 파일 {len(filenames)}개가 추가되었습니다.")
 
+    def add_compare_source_files(self):
+        filenames = filedialog.askopenfilenames(
+            title="원본 파일 선택", filetypes=[("지원 파일", "*.csv *.xlsx *.xls")]
+        )
+        if filenames:
+            self.compare_source_list.add_files(list(filenames))
+            self.log_view.log(f"대조할 파일 {len(filenames)}개가 추가되었습니다.")
+
     def add_target_files(self):
         filenames = filedialog.askopenfilenames(
             title="대조 대상 선택", filetypes=[("지원 파일", "*.csv *.xlsx *.xls")]
@@ -118,6 +171,14 @@ class ContactCleanerApp(tk.Tk):
         if filenames:
             self.target_list.add_files(list(filenames))
             self.log_view.log(f"대조 대상 파일 {len(filenames)}개가 추가되었습니다.")
+
+    def add_merge_files(self):
+        filenames = filedialog.askopenfilenames(
+            title="병합할 파일 선택", filetypes=[("Excel 파일", "*.xlsx *.xls")]
+        )
+        if filenames:
+            self.merge_list.add_files(list(filenames))
+            self.log_view.log(f"병합 파일 {len(filenames)}개가 추가되었습니다.")
 
     def start_cleaning(self):
         files = self.source_list.get_files()
@@ -132,7 +193,7 @@ class ContactCleanerApp(tk.Tk):
         thread.start()
 
     def start_comparison(self):
-        source_files = self.source_list.get_files()
+        source_files = self.compare_source_list.get_files()
         target_files = self.target_list.get_files()
 
         if not source_files:
@@ -150,15 +211,31 @@ class ContactCleanerApp(tk.Tk):
         )
         thread.start()
 
+    def start_merge(self):
+        merge_files = self.merge_list.get_files()
+
+        if not merge_files:
+            messagebox.showwarning("경고", "병합할 파일을 선택해주세요.")
+            return
+
+        self._lock_ui()
+        self.log_view.log("병합 작업을 시작합니다...", "INFO")
+
+        thread = threading.Thread(
+            target=self._merge_thread, args=(merge_files,), daemon=True
+        )
+        thread.start()
+
     def _lock_ui(self):
         self.clean_btn.configure(state="disabled")
         self.compare_btn.configure(state="disabled")
+        self.merge_btn.configure(state="disabled")
         self.progress.reset()
-        self.log_view.clear()
 
     def _unlock_ui(self):
         self.clean_btn.configure(state="normal")
         self.compare_btn.configure(state="normal")
+        self.merge_btn.configure(state="normal")
 
     def _clean_thread(self, files):
         try:
@@ -244,6 +321,204 @@ class ContactCleanerApp(tk.Tk):
         except Exception as e:
             self.after(0, self.log_view.log, f"대조 중 오류: {str(e)}", "ERROR")
             self.after(0, self._unlock_ui)
+
+    def _merge_thread(self, merge_files):
+        try:
+            import openpyxl
+            import re
+            from datetime import datetime
+
+            self.after(0, self.log_view.log, f"{len(merge_files)}개 파일 로드 중...", "INFO")
+            self.after(0, self.progress.update_progress, 1, 3, "파일 로드 중...")
+
+            all_data = []
+            invalid_files = []
+
+            for file_path in merge_files:
+                try:
+                    owner_name = self._extract_owner_name(file_path)
+                    if not owner_name:
+                        invalid_files.append(Path(file_path).name)
+                        continue
+
+                    wb = openpyxl.load_workbook(file_path)
+                    ws = wb.active
+                    if not ws:
+                        continue
+
+                    for row_idx in range(3, ws.max_row + 1):
+                        name = ws.cell(row_idx, 2).value
+                        phone = ws.cell(row_idx, 3).value
+                        rec1 = ws.cell(row_idx, 4).value
+                        rec2 = ws.cell(row_idx, 5).value
+                        rec3 = ws.cell(row_idx, 6).value
+                        rec4 = ws.cell(row_idx, 7).value
+                        filename = ws.cell(row_idx, 8).value
+
+                        if phone:
+                            all_data.append({
+                                "주소록 주인": owner_name,
+                                "이름": name or "",
+                                "변환됨": phone,
+                                "추천1": rec1 or "",
+                                "추천2": rec2 or "",
+                                "추천3": rec3 or "",
+                                "추천4": rec4 or "",
+                                "파일명": filename or ""
+                            })
+                    wb.close()
+                except Exception as e:
+                    self.after(0, self.log_view.log, f"{Path(file_path).name} 로드 실패: {str(e)}", "WARNING")
+
+            if invalid_files:
+                self.after(0, self.log_view.log, f"파일명 형식 오류: {', '.join(invalid_files)}", "WARNING")
+
+            if not all_data:
+                self.after(0, self.log_view.log, "병합할 데이터가 없습니다.", "ERROR")
+                self.after(0, self._unlock_ui)
+                return
+
+            self.after(0, self.log_view.log, f"총 {len(all_data)}개 항목 로드 완료", "INFO")
+            self.after(0, self.progress.update_progress, 2, 3, "중복 제거 중...")
+
+            merged_data = self._merge_with_check(all_data)
+
+            self.after(0, self.log_view.log, f"중복 제거 후 {len(merged_data)}개 항목", "INFO")
+            self.after(0, self.progress.update_progress, 3, 3, "파일 저장 중...")
+
+            output_path = create_output_structure("병합", "최종병합")
+            self._save_merged_excel(merged_data, output_path)
+
+            self.after(0, self.log_view.log, f"병합 완료: {len(merged_data)}개 항목", "SUCCESS")
+            self.after(0, lambda: self.merge_list.clear_all())
+            self.after(0, self._on_complete)
+        except Exception as e:
+            self.after(0, self.log_view.log, f"병합 중 오류: {str(e)}", "ERROR")
+            self.after(0, self._unlock_ui)
+
+    def _extract_owner_name(self, file_path: str) -> str:
+        import re
+        filename = Path(file_path).stem
+        match = re.search(r'주소록[_\s]*([^_\s]+)', filename)
+        if match:
+            return match.group(1)
+        return ""
+
+    def _merge_with_check(self, all_data: list[dict]) -> list[dict]:
+        import re
+
+        def is_checked(value) -> bool:
+            if not value:
+                return False
+            value_str = str(value).strip().upper()
+            return bool(re.match(r'^[OㅇVX✓✔CHECK]', value_str))
+
+        merged = {}
+
+        for item in all_data:
+            phone = item["변환됨"]
+            name = item["이름"]
+            key = (name, phone)
+
+            rec4_checked = is_checked(item.get("추천4", ""))
+
+            if key not in merged:
+                merged[key] = []
+
+            merged[key].append({
+                "주소록 주인": item["주소록 주인"],
+                "이름": name,
+                "변환됨": phone,
+                "추천1": item.get("추천1", ""),
+                "추천2": item.get("추천2", ""),
+                "추천3": item.get("추천3", ""),
+                "추천4": item.get("추천4", ""),
+                "파일명": item.get("파일명", ""),
+                "checked": rec4_checked
+            })
+
+        result = []
+        for key, items in merged.items():
+            checked_items = [item for item in items if item["checked"]]
+
+            if checked_items:
+                result.extend(checked_items)
+            else:
+                result.append(items[0])
+
+        return result
+
+    def _save_merged_excel(self, data: list[dict], path: Path) -> None:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        if not ws:
+            return
+
+        ws.append([])
+
+        headers = [
+            "연번",
+            "주소록 주인",
+            "이름 (휴대폰에 저장될 이름)",
+            "휴대폰번호",
+            "추천1(DW)",
+            "추천2",
+            "추천3(비교대상과체크)",
+            "추천4",
+            "휴대폰 저장파일명",
+        ]
+        ws.append(headers)
+
+        gray_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
+        yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+        header_font = Font(name="Malgun Gothic", size=11, bold=False)
+        center_alignment = Alignment(horizontal="center", vertical="center")
+        thin_border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        for col_idx in range(1, 10):
+            cell = ws.cell(row=2, column=col_idx)
+            cell.font = header_font
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            cell.fill = gray_fill
+
+        for idx, item in enumerate(data, start=1):
+            current_row = ws.max_row + 1
+            ws.cell(row=current_row, column=1, value=idx)
+            ws.cell(row=current_row, column=2, value=item.get("주소록 주인", ""))
+            ws.cell(row=current_row, column=3, value=item.get("이름", "") or " ")
+            ws.cell(row=current_row, column=4, value=item.get("변환됨", "") or " ")
+            ws.cell(row=current_row, column=5, value=item.get("추천1", ""))
+            ws.cell(row=current_row, column=6, value=item.get("추천2", ""))
+            ws.cell(row=current_row, column=7, value=item.get("추천3", ""))
+            ws.cell(row=current_row, column=8, value=item.get("추천4", ""))
+            ws.cell(row=current_row, column=9, value=item.get("파일명", ""))
+
+            for col_idx in range(1, 10):
+                cell = ws.cell(row=current_row, column=col_idx)
+                cell.border = thin_border
+                cell.font = Font(name="Malgun Gothic", size=10)
+                if col_idx in [1, 7]:
+                    cell.alignment = center_alignment
+                if col_idx == 7:
+                    cell.fill = yellow_fill
+
+        from openpyxl.utils import get_column_letter
+        widths = {1: 8, 2: 15, 3: 30, 4: 20, 5: 10, 6: 10, 7: 25, 8: 10, 9: 25}
+        for col_idx, width in widths.items():
+            ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+        if path.suffix != ".xlsx":
+            path = path.with_suffix(".xlsx")
+        wb.save(path)
 
     def _process_reference_files(self, target_files) -> list[dict]:
         transformed = []
