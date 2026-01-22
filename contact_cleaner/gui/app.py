@@ -85,8 +85,8 @@ class ContactCleanerApp(BaseClass):
         style.configure('TLabel', font=('Malgun Gothic', 12))
         style.configure('TProgressbar', thickness=100)
 
-        self.notebook = ttk.Notebook(main_container)
-        self.notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+        self.notebook = ttk.Notebook(main_container, height=550)
+        self.notebook.pack(fill=tk.X, pady=(0, 15))
 
         self._setup_clean_tab()
         self._setup_compare_tab()
@@ -95,6 +95,7 @@ class ContactCleanerApp(BaseClass):
 
         self.log_view = LogFrame(main_container)
         self.log_view.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+        self.log_view.configure(height=150)
 
         bottom_frame = ttk.Frame(main_container)
         bottom_frame.pack(fill=tk.X)
