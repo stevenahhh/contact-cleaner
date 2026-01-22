@@ -23,9 +23,13 @@ class FileListFrame(ttk.LabelFrame):
     def _setup_ui(self, on_add):
         list_frame = ttk.Frame(self)
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        # Create container for listbox and drag hint overlay
+        container = tk.Frame(list_frame, bd=0, highlightthickness=0)
+        container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.listbox = tk.Listbox(
-            list_frame,
+            container,
             selectmode=tk.EXTENDED,
             height=6,
             bd=0,
@@ -34,8 +38,25 @@ class FileListFrame(ttk.LabelFrame):
             font=self._listbox_font,
             exportselection=False,
         )
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.listbox.place(x=0, y=0, relwidth=1.0, relheight=1.0)
         self.listbox.bind('<Configure>', lambda e: None)
+        
+        # Add drag & drop hint overlay (only shown when empty and DND available)
+        if HAS_DND:
+            self._hint_font = tkfont.Font(family="Malgun Gothic", size=10)
+            self.hint_label = tk.Label(
+                container,
+                text="파일을 여기에 드래그하세요\n또는 '파일 추가' 버튼 클릭",
+                font=self._hint_font,
+                fg="#999999",
+                bg=self.listbox.cget("bg"),
+                justify=tk.CENTER
+            )
+            self.hint_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+            self.hint_label.lower()  # Place behind listbox initially
+            
+            # Bind events to show/hide hint
+            self.listbox.bind('<<ListboxSelect>>', lambda e: self._update_hint_visibility())
         
         self._setup_drag_drop()
 
@@ -63,14 +84,27 @@ class FileListFrame(ttk.LabelFrame):
         try:
             self.listbox.drop_target_register(DND_FILES)
             self.listbox.dnd_bind('<<Drop>>', self._on_drop)
+            self.listbox.dnd_bind('<<DragEnter>>', self._on_drag_enter)
+            self.listbox.dnd_bind('<<DragLeave>>', self._on_drag_leave)
         except Exception:
             pass
+    
+    def _on_drag_enter(self, event):
+        # Highlight on drag enter
+        if hasattr(self, 'hint_label'):
+            self.hint_label.config(fg="#2196F3")
+    
+    def _on_drag_leave(self, event):
+        # Remove highlight on drag leave
+        if hasattr(self, 'hint_label'):
+            self.hint_label.config(fg="#999999")
     
     def _on_drop(self, event):
         files = self.listbox.tk.splitlist(event.data)
         valid_files = [f for f in files if f.lower().endswith(('.csv', '.xlsx', '.xls'))]
         if valid_files:
             self.add_files(valid_files)
+        self._update_hint_visibility()
 
     def add_files(self, new_files):
         for f in new_files:
@@ -78,6 +112,7 @@ class FileListFrame(ttk.LabelFrame):
                 self.files.append(f)
                 self.listbox.insert(tk.END, f)
         self._update_label()
+        self._update_hint_visibility()
 
     def remove_selection(self):
         selection = self.listbox.curselection()
@@ -96,6 +131,17 @@ class FileListFrame(ttk.LabelFrame):
         self.files.clear()
         self.listbox.delete(0, tk.END)
         self._update_label()
+        self._update_hint_visibility()
+    
+    def _update_hint_visibility(self):
+        # Show hint only when listbox is empty and DND is available
+        if not HAS_DND or not hasattr(self, 'hint_label'):
+            return
+        
+        if len(self.files) == 0:
+            self.hint_label.lift()  # Show hint on top
+        else:
+            self.hint_label.lower()  # Hide hint behind listbox
 
 
 class LogFrame(ttk.LabelFrame):
