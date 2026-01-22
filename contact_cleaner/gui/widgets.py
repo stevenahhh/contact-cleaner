@@ -214,11 +214,18 @@ class LogFrame(ttk.LabelFrame):
 
     def _open_folder(self, path: str):
         from pathlib import Path
-        from contact_cleaner.utils.file_utils import open_folder_in_explorer
+        import subprocess
+        import os
+        import sys
         
         file_path = Path(path)
         if file_path.exists():
-            open_folder_in_explorer(file_path)
+            if sys.platform == "win32":
+                os.startfile(file_path)
+            elif sys.platform == "darwin":
+                subprocess.run(["open", str(file_path)])
+            else:
+                subprocess.run(["xdg-open", str(file_path)])
 
     def clear(self):
         self.text_area.config(state=tk.NORMAL)
@@ -230,7 +237,12 @@ class StatusLegend(ttk.LabelFrame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, text="상태 설명", padding=12, **kwargs)
 
-        items = [("O", "이름 유사 + 번호 일치"), ("△", "번호만 일치"), ("X", "매칭 없음")]
+        items = [
+            ("O", "이름 + 번호 일치"),
+            ("△(번호)", "번호만 일치"),
+            ("△(이름)", "이름만 일치"),
+            ("X", "매칭 없음")
+        ]
 
         self._legend_sym_font = tkfont.Font(
             family="Malgun Gothic", size=11, weight="bold"
@@ -241,7 +253,7 @@ class StatusLegend(ttk.LabelFrame):
             row.pack(fill=tk.X, pady=3)
 
             lbl_sym = ttk.Label(
-                row, text=symbol, width=4, anchor="center", font=self._legend_sym_font
+                row, text=symbol, width=8, anchor="center", font=self._legend_sym_font
             )
 
             lbl_sym.pack(side=tk.LEFT)

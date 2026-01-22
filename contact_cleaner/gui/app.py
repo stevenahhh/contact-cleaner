@@ -91,15 +91,13 @@ class ContactCleanerApp(BaseClass):
         self._setup_clean_tab()
         self._setup_compare_tab()
         self._setup_merge_tab()
+        self._setup_help_tab()
 
         self.log_view = LogFrame(main_container)
         self.log_view.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
 
         bottom_frame = ttk.Frame(main_container)
         bottom_frame.pack(fill=tk.X)
-
-        self.legend = StatusLegend(bottom_frame)
-        self.legend.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
 
         self.progress = ProgressFrame(bottom_frame)
         self.progress.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -146,6 +144,10 @@ class ContactCleanerApp(BaseClass):
         )
         self.target_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
+        # Legend shown only in compare tab
+        self.legend = StatusLegend(compare_tab)
+        self.legend.pack(fill=tk.X, pady=(0, 10))
+
         self.compare_btn = ttk.Button(
             compare_tab,
             text="데이터 대조 시작",
@@ -191,6 +193,121 @@ class ContactCleanerApp(BaseClass):
             command=self.start_merge,
         )
         self.merge_btn.pack(fill=tk.X, ipady=5)
+
+    def _setup_help_tab(self):
+        help_tab = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(help_tab, text="도움말")
+
+        # Scrollable text widget for help content
+        help_frame = ttk.Frame(help_tab)
+        help_frame.pack(fill=tk.BOTH, expand=True)
+
+        help_text = tk.Text(
+            help_frame,
+            wrap=tk.WORD,
+            font=("Malgun Gothic", 11),
+            bd=0,
+            highlightthickness=1,
+            cursor="arrow",
+            padx=15,
+            pady=15,
+        )
+        help_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar = ttk.Scrollbar(help_frame, orient="vertical", command=help_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        help_text.config(yscrollcommand=scrollbar.set)
+
+        # Configure text tags for formatting
+        help_text.tag_configure("title", font=("Malgun Gothic", 16, "bold"), spacing3=10)
+        help_text.tag_configure("section", font=("Malgun Gothic", 13, "bold"), spacing1=15, spacing3=5, foreground="#1976D2")
+        help_text.tag_configure("subsection", font=("Malgun Gothic", 12, "bold"), spacing1=10, spacing3=3)
+        help_text.tag_configure("normal", font=("Malgun Gothic", 11), spacing1=2, lmargin1=20, lmargin2=20)
+        help_text.tag_configure("bullet", font=("Malgun Gothic", 11), spacing1=2, lmargin1=30, lmargin2=40)
+        help_text.tag_configure("warning", font=("Malgun Gothic", 11), foreground="#F44336", lmargin1=20, lmargin2=20)
+        help_text.tag_configure("info", font=("Malgun Gothic", 11), foreground="#2196F3", lmargin1=20, lmargin2=20)
+
+        # Help content
+        help_content = [
+            ("title", "주소록 정리 v1.3.0 사용 매뉴얼\n\n"),
+            
+            ("section", "1. Step 1. 정리 (주소록 정리)\n"),
+            ("normal", "원본 주소록 파일의 전화번호를 정규화하고 정리합니다.\n\n"),
+            ("subsection", "사용 방법:\n"),
+            ("bullet", "• 정리할 원본 파일을 드래그하거나 '파일 추가' 버튼으로 선택\n"),
+            ("bullet", "• CSV, XLSX, XLS 파일 형식 지원\n"),
+            ("bullet", "• '주소록 정리 시작' 버튼 클릭\n"),
+            ("bullet", "• 결과 파일이 바탕화면 > 주소록정리결과 폴더에 저장됨\n\n"),
+            ("subsection", "출력 형식:\n"),
+            ("bullet", "• 연번, 이름, 휴대폰번호, 추천1~3, 선택병합, 휴대폰 저장파일명\n"),
+            ("bullet", "• 전화번호는 010-XXXX-XXXX 형식으로 자동 변환\n\n"),
+
+            ("section", "2. Step 2. 대조 (주소록 비교)\n"),
+            ("normal", "두 주소록을 비교하여 일치 여부를 확인합니다.\n\n"),
+            ("subsection", "사용 방법:\n"),
+            ("bullet", "• '비교할 주소록': 기준이 되는 주소록 파일 선택\n"),
+            ("bullet", "• '대조 대상 파일': 비교할 대상 주소록 파일 선택\n"),
+            ("bullet", "• '데이터 대조 시작' 버튼 클릭\n\n"),
+            ("subsection", "대조 결과 상태:\n"),
+            ("bullet", "• O: 이름과 번호가 모두 일치\n"),
+            ("bullet", "• △(번호): 번호만 일치 (이름이 다름)\n"),
+            ("bullet", "• △(이름): 이름만 일치 (번호가 다름)\n"),
+            ("bullet", "• X: 일치하는 항목 없음\n\n"),
+
+            ("section", "3. Step 3. 병합 (선택 병합)\n"),
+            ("normal", "여러 주소록에서 선택한 항목만 모아서 병합합니다.\n\n"),
+            ("subsection", "사용 방법:\n"),
+            ("bullet", "• 정리 또는 대조 결과 파일에서 '선택병합' 열에 O 표시\n"),
+            ("info", "  (알파벳 대문자 O 또는 소문자 o)\n"),
+            ("bullet", "• 파일명을 '{소유자명}_주소록.xlsx' 형식으로 변경\n"),
+            ("bullet", "  예: 홍길동_주소록.xlsx, 김철수_주소록.xlsx\n"),
+            ("bullet", "• 병합할 파일들을 선택하고 '병합 시작' 클릭\n"),
+            ("bullet", "• 선택병합에 O 표시된 항목만 최종 결과에 포함됨\n"),
+            ("bullet", "• 동일한 (이름, 번호)는 한 번만 포함됨\n\n"),
+
+            ("section", "4. 지원 파일 형식\n"),
+            ("bullet", "• CSV (쉼표로 구분된 파일)\n"),
+            ("bullet", "• XLSX (Excel 2007 이상)\n"),
+            ("bullet", "• XLS (Excel 97-2003)\n"),
+            ("normal", "\n인코딩: UTF-8, CP949(한글 Windows) 자동 감지\n\n"),
+
+            ("section", "5. 자주 발생하는 오류 및 해결 방법\n\n"),
+            
+            ("subsection", "❌ '파일명 형식 오류'\n"),
+            ("warning", "원인: 병합 시 파일명이 '{이름}_주소록.xlsx' 형식이 아님\n"),
+            ("normal", "해결: 파일명을 '홍길동_주소록.xlsx' 형식으로 변경\n\n"),
+            
+            ("subsection", "❌ '정리할 원본 파일을 선택해주세요'\n"),
+            ("warning", "원인: 파일을 선택하지 않고 시작 버튼을 클릭\n"),
+            ("normal", "해결: 먼저 파일을 추가한 후 시작 버튼 클릭\n\n"),
+            
+            ("subsection", "❌ '병합할 데이터가 없습니다'\n"),
+            ("warning", "원인: 선택병합 열에 O 표시된 항목이 없음\n"),
+            ("normal", "해결: 병합하려는 파일에서 선택병합 열에 O 표시 후 저장\n\n"),
+            
+            ("subsection", "❌ 전화번호가 이상하게 변환됨\n"),
+            ("warning", "원인: 원본 파일의 전화번호 형식이 올바르지 않음\n"),
+            ("normal", "해결: 전화번호가 숫자로만 구성되어 있는지 확인\n"),
+            ("normal", "      앞에 '(국가번호)' 등이 붙어 있으면 제거\n\n"),
+            
+            ("subsection", "❌ 파일을 읽을 수 없음\n"),
+            ("warning", "원인: 파일이 다른 프로그램에서 열려 있음\n"),
+            ("normal", "해결: Excel에서 파일을 닫고 다시 시도\n\n"),
+
+            ("section", "6. 결과 파일 위치\n"),
+            ("normal", "모든 결과 파일은 아래 경로에 저장됩니다:\n"),
+            ("info", "바탕화면 > 주소록정리결과 > [날짜] > [시간]\n\n"),
+            
+            ("section", "7. 팁\n"),
+            ("bullet", "• 로그 메시지의 파일명을 클릭하면 파일이 열립니다\n"),
+            ("bullet", "• 여러 파일을 한번에 드래그하여 추가할 수 있습니다\n"),
+            ("bullet", "• 작업 완료 후 결과 폴더 열기 대화상자가 나타납니다\n"),
+        ]
+
+        for tag, text in help_content:
+            help_text.insert(tk.END, text, tag)
+
+        help_text.config(state=tk.DISABLED)
 
     def add_source_files(self):
         filenames = filedialog.askopenfilenames(
@@ -366,7 +483,7 @@ class ContactCleanerApp(BaseClass):
             save_styled_excel(merged_data, output_path,
                               progress_callback=on_save_progress)
 
-            stats = {"O": 0, "△": 0, "X": 0}
+            stats = {"O": 0, "△(번호)": 0, "△(이름)": 0, "X": 0}
             for row in merged_data:
                 status = row.get("검증", "")
                 if status in stats:
@@ -374,7 +491,7 @@ class ContactCleanerApp(BaseClass):
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")
             self.after(0, self.log_view.log,
-                       f"대조 완료 (O:{stats['O']}, △:{stats['△']}, X:{stats['X']})", "SUCCESS", str(output_path))
+                       f"대조 완료 (O:{stats['O']}, △(번호):{stats['△(번호)']}, △(이름):{stats['△(이름)']}, X:{stats['X']})", "SUCCESS", str(output_path))
             self.after(0, lambda: self.source_list.clear_all())
             self.after(0, lambda: self.target_list.clear_all())
             self.after(0, self._on_complete)
@@ -612,12 +729,22 @@ class ContactCleanerApp(BaseClass):
             name = re.sub(r'[\d\-\+\(\)\s]+', '', name)
             return name
 
+        # Build phone index for right data
         right_by_phone: dict[str, list[tuple[int, dict]]] = {}
         for idx, item in enumerate(right_data):
             phone = item["변환됨"]
             if phone not in right_by_phone:
                 right_by_phone[phone] = []
             right_by_phone[phone].append((idx, item))
+
+        # Build name index for right data (for name-only matching)
+        right_by_name: dict[str, list[tuple[int, dict]]] = {}
+        for idx, item in enumerate(right_data):
+            name_clean = clean_name(item["이름"])
+            if name_clean:
+                if name_clean not in right_by_name:
+                    right_by_name[name_clean] = []
+                right_by_name[name_clean].append((idx, item))
 
         result = []
         matched_right_indices = set()
@@ -627,29 +754,18 @@ class ContactCleanerApp(BaseClass):
             left_phone = left_item["변환됨"]
             left_name_clean = clean_name(left_name)
 
-            candidates = right_by_phone.get(left_phone, [])
-            available = [(idx, item) for idx,
-                         item in candidates if idx not in matched_right_indices]
+            phone_candidates = right_by_phone.get(left_phone, [])
+            available_phone = [(idx, item) for idx,
+                         item in phone_candidates if idx not in matched_right_indices]
 
-            if not available:
-                result.append({
-                    "이름": left_name,
-                    "원본 전화번호": "",
-                    "변환됨": left_phone,
-                    "검증": "X",
-                })
-                continue
-
-            name_match_found = False
-            phone_only_matches = []
-
-            for right_idx, right_item in available:
-                right_name = right_item["이름"].strip(
-                ) if right_item["이름"] else ""
+            # Check for exact match (name AND phone)
+            exact_match_found = False
+            for right_idx, right_item in available_phone:
+                right_name = right_item["이름"].strip() if right_item["이름"] else ""
                 right_name_clean = clean_name(right_name)
 
                 if left_name_clean and right_name_clean:
-                    if left_name_clean in right_name_clean or right_name_clean in left_name_clean:
+                    if left_name_clean == right_name_clean:
                         result.append({
                             "이름": right_name,
                             "원본 전화번호": "",
@@ -657,41 +773,54 @@ class ContactCleanerApp(BaseClass):
                             "검증": "O",
                         })
                         matched_right_indices.add(right_idx)
-                        name_match_found = True
+                        exact_match_found = True
                         break
-                    else:
-                        phone_only_matches.append((right_idx, right_item))
-                else:
-                    merged_name = left_name or right_name
-                    result.append({
-                        "이름": merged_name,
-                        "원본 전화번호": "",
-                        "변환됨": left_phone,
-                        "검증": "O",
-                    })
-                    matched_right_indices.add(right_idx)
-                    name_match_found = True
-                    break
 
-            if name_match_found:
+            if exact_match_found:
                 continue
 
-            if phone_only_matches:
+            # Check for phone-only match
+            if available_phone:
+                right_idx, right_item = available_phone[0]
                 result.append({
                     "이름": left_name,
                     "원본 전화번호": "",
                     "변환됨": left_phone,
-                    "검증": "△",
+                    "검증": "△(번호)",
                 })
-                for right_idx, right_item in phone_only_matches:
-                    result.append({
-                        "이름": right_item["이름"].strip() if right_item["이름"] else "",
-                        "원본 전화번호": "",
-                        "변환됨": right_item["변환됨"],
-                        "검증": "△",
-                    })
-                    matched_right_indices.add(right_idx)
+                matched_right_indices.add(right_idx)
+                continue
 
+            # Check for name-only match
+            if left_name_clean:
+                name_match_found = False
+                for name_key, name_candidates in right_by_name.items():
+                    if left_name_clean == name_key:
+                        available_name = [(idx, item) for idx, item in name_candidates 
+                                         if idx not in matched_right_indices]
+                        if available_name:
+                            right_idx, right_item = available_name[0]
+                            result.append({
+                                "이름": left_name,
+                                "원본 전화번호": "",
+                                "변환됨": left_phone,
+                                "검증": "△(이름)",
+                            })
+                            matched_right_indices.add(right_idx)
+                            name_match_found = True
+                            break
+                if name_match_found:
+                    continue
+
+            # No match at all
+            result.append({
+                "이름": left_name,
+                "원본 전화번호": "",
+                "변환됨": left_phone,
+                "검증": "X",
+            })
+
+        # Add unmatched right items
         for idx, right_item in enumerate(right_data):
             if idx not in matched_right_indices:
                 result.append({
