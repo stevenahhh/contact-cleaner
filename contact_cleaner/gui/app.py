@@ -48,13 +48,31 @@ class ContactCleanerApp(BaseClass):
         except:
             scale_factor = 1.0
 
-        self.tk.call('tk', 'scaling', scale_factor * 1.25)
+        self.tk.call('tk', 'scaling', scale_factor * 1.125)
+
+        # Calculate window size based on screen resolution
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # For 4K (3840x2160): use ~50% of screen
+        # For 1080p (1920x1080): use ~60% of screen  
+        if screen_height >= 2160:
+            win_width = 1400
+            win_height = 1200
+        elif screen_height >= 1440:
+            win_width = 1200
+            win_height = 1000
+        else:
+            win_width = 1100
+            win_height = 950
 
         self.title("주소록 정리 v1.3.0")
-        self.geometry("1150x1150")
-        self.minsize(1150, 1150)
-        self.maxsize(1150, 1150)
-        self.resizable(False, False)
+        self.geometry(f"{win_width}x{win_height}")
+        self.minsize(1000, 850)
+        self.resizable(True, True)
+        
+        # Store dimensions for layout calculations
+        self._win_height = win_height
 
         self._setup_ui()
 
@@ -85,19 +103,26 @@ class ContactCleanerApp(BaseClass):
         style.configure('TLabel', font=('Malgun Gothic', 12))
         style.configure('TProgressbar', thickness=100)
 
-        self.notebook = ttk.Notebook(main_container, height=550)
+        # Calculate notebook height based on window height
+        notebook_height = int(self._win_height * 0.55)
+
+        self.notebook = ttk.Notebook(main_container, height=notebook_height)
         self.notebook.pack(fill=tk.X, pady=(0, 15))
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
         self._setup_clean_tab()
         self._setup_compare_tab()
         self._setup_merge_tab()
         self._setup_help_tab()
 
-        self.log_view = LogFrame(main_container)
-        self.log_view.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
-        self.log_view.configure(height=150)
+        # Bottom section container (log + progress) - will be hidden on help tab
+        self.bottom_section = ttk.Frame(main_container)
+        self.bottom_section.pack(fill=tk.BOTH, expand=True)
 
-        bottom_frame = ttk.Frame(main_container)
+        self.log_view = LogFrame(self.bottom_section)
+        self.log_view.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+
+        bottom_frame = ttk.Frame(self.bottom_section)
         bottom_frame.pack(fill=tk.X)
 
         self.progress = ProgressFrame(bottom_frame)
@@ -107,6 +132,14 @@ class ContactCleanerApp(BaseClass):
             self, text="v1.3.0", font=self.version_font, foreground="#888888"
         )
         v_label.place(relx=1.0, rely=1.0, x=-10, y=-5, anchor="se")
+
+    def _on_tab_changed(self, event):
+        """Hide log/progress when on help tab, show otherwise"""
+        current_tab = self.notebook.index(self.notebook.select())
+        if current_tab == 3:  # Help tab (0-indexed)
+            self.bottom_section.pack_forget()
+        else:
+            self.bottom_section.pack(fill=tk.BOTH, expand=True)
 
     def _setup_clean_tab(self):
         clean_tab = ttk.Frame(self.notebook, padding=10)
