@@ -3,6 +3,12 @@ from tkinter import ttk, font as tkfont
 from typing import List, Callable, Optional
 from datetime import datetime
 
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    HAS_DND = True
+except ImportError:
+    HAS_DND = False
+
 
 class FileListFrame(ttk.LabelFrame):
     def __init__(
@@ -30,6 +36,8 @@ class FileListFrame(ttk.LabelFrame):
         )
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.listbox.bind('<Configure>', lambda e: None)
+        
+        self._setup_drag_drop()
 
         scrollbar = ttk.Scrollbar(
             list_frame, orient="vertical", command=self.listbox.yview
@@ -47,6 +55,22 @@ class FileListFrame(ttk.LabelFrame):
 
         del_btn = ttk.Button(btn_frame, text="제거", command=self.remove_selection)
         del_btn.pack(side=tk.LEFT)
+    
+    def _setup_drag_drop(self):
+        if not HAS_DND:
+            return
+        
+        try:
+            self.listbox.drop_target_register(DND_FILES)
+            self.listbox.dnd_bind('<<Drop>>', self._on_drop)
+        except Exception:
+            pass
+    
+    def _on_drop(self, event):
+        files = self.listbox.tk.splitlist(event.data)
+        valid_files = [f for f in files if f.lower().endswith(('.csv', '.xlsx', '.xls'))]
+        if valid_files:
+            self.add_files(valid_files)
 
     def add_files(self, new_files):
         for f in new_files:

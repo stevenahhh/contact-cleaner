@@ -17,8 +17,16 @@ from contact_cleaner.gui.widgets import (
     LogFrame,
 )
 
+try:
+    from tkinterdnd2 import TkinterDnD
+    HAS_DND = True
+except ImportError:
+    HAS_DND = False
 
-class ContactCleanerApp(tk.Tk):
+# Use TkinterDnD.Tk if available, otherwise fallback to standard tk.Tk
+BaseClass = TkinterDnD.Tk if HAS_DND else tk.Tk
+
+class ContactCleanerApp(BaseClass):
     def __init__(self):
         super().__init__()
         
