@@ -64,7 +64,7 @@ class ContactProcessor:
                         }
                     )
 
-                    if name and phone:
+                    if phone:
                         transformed_data.append(
                             {
                                 "이름": name,
@@ -116,10 +116,23 @@ class ContactProcessor:
         elif full_name:
             return full_name
         else:
-            for value in row.values():
+            has_any_name_column = any([
+                name_columns["surname"],
+                name_columns["first_name"],
+                name_columns["middle_name"],
+                name_columns["full_name"]
+            ])
+            
+            if has_any_name_column:
+                return ""
+            
+            for header, value in row.items():
+                from .normalizer import normalize_phone_number
                 cleaned = self._clean_value(value)
                 if cleaned and cleaned not in ("'", '"'):
-                    return cleaned
+                    result = normalize_phone_number(cleaned)
+                    if result.status != "valid":
+                        return cleaned
             return ""
     
     def _clean_value(self, value: str) -> str:
