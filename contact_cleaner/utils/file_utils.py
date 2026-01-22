@@ -75,6 +75,7 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
         return
 
     ws.append([])
+    ws.cell(row=1, column=1, value="*선택병합 시에는 (해당 열에 \"O\" 표시해 주세요.)")
 
     headers = [
         "연번",
@@ -83,7 +84,7 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
         "추천1(DW)",
         "추천2",
         "추천3(비교대상과체크)",
-        "추천4",
+        "선택병합",
         "휴대폰 저장파일명",
     ]
     ws.append(headers)
@@ -91,6 +92,7 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
     gray_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
     yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     header_font = Font(name="Malgun Gothic", size=11, bold=False)
+    header_font_red = Font(name="Malgun Gothic", size=11, bold=False, color="FF0000")
     data_font = Font(name="Malgun Gothic", size=10)
     center_alignment = Alignment(horizontal="center", vertical="center")
     thin_border = Border(
@@ -102,7 +104,10 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
 
     for col_idx in range(1, 9):
         cell = ws.cell(row=2, column=col_idx)
-        cell.font = header_font
+        if col_idx == 7:
+            cell.font = header_font_red
+        else:
+            cell.font = header_font
         cell.alignment = center_alignment
         cell.border = thin_border
         cell.fill = gray_fill

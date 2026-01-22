@@ -1,3 +1,10 @@
+from contact_cleaner.gui.widgets import (
+    FileListFrame,
+    StatusLegend,
+    ProgressFrame,
+    LogFrame,
+)
+from contact_cleaner.gui.theme import init_theme
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
@@ -9,13 +16,6 @@ project_root = current_dir.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
-from contact_cleaner.gui.theme import init_theme
-from contact_cleaner.gui.widgets import (
-    FileListFrame,
-    StatusLegend,
-    ProgressFrame,
-    LogFrame,
-)
 
 try:
     from tkinterdnd2 import TkinterDnD
@@ -26,10 +26,11 @@ except ImportError:
 # Use TkinterDnD.Tk if available, otherwise fallback to standard tk.Tk
 BaseClass = TkinterDnD.Tk if HAS_DND else tk.Tk
 
+
 class ContactCleanerApp(BaseClass):
     def __init__(self):
         super().__init__()
-        
+
         self.withdraw()
 
         try:
@@ -39,14 +40,14 @@ class ContactCleanerApp(BaseClass):
             pass
 
         init_theme(self)
-        
+
         try:
             from ctypes import windll
             dpi = windll.user32.GetDpiForSystem()
             scale_factor = dpi / 96.0
         except:
             scale_factor = 1.0
-        
+
         self.tk.call('tk', 'scaling', scale_factor * 1.25)
 
         self.title("주소록 정리 v1.3.0")
@@ -54,16 +55,17 @@ class ContactCleanerApp(BaseClass):
         self.minsize(1150, 1150)
         self.maxsize(1150, 1150)
         self.resizable(False, False)
-        
+
         self._setup_ui()
-        
+
         self.update_idletasks()
         self.deiconify()
 
     def _setup_ui(self):
         from tkinter import font as tkfont
 
-        self.header_font = tkfont.Font(family="Malgun Gothic", size=24, weight="bold")
+        self.header_font = tkfont.Font(
+            family="Malgun Gothic", size=24, weight="bold")
         self.default_font_bold = tkfont.Font(
             family="Malgun Gothic", size=12, weight="bold"
         )
@@ -74,10 +76,12 @@ class ContactCleanerApp(BaseClass):
         main_container.pack(fill=tk.BOTH, expand=True)
 
         style = ttk.Style()
-        style.configure('TNotebook.Tab', padding=[20, 10], font=('Malgun Gothic', 12))
+        style.configure('TNotebook.Tab', padding=[
+                        20, 10], font=('Malgun Gothic', 12))
         style.configure('TButton', font=('Malgun Gothic', 12))
         style.configure('Accent.TButton', font=('Malgun Gothic', 12))
-        style.configure('TLabelframe.Label', font=('Malgun Gothic', 13, 'bold'))
+        style.configure('TLabelframe.Label', font=(
+            'Malgun Gothic', 13, 'bold'))
         style.configure('TLabel', font=('Malgun Gothic', 12))
         style.configure('TProgressbar', thickness=100)
 
@@ -107,7 +111,7 @@ class ContactCleanerApp(BaseClass):
 
     def _setup_clean_tab(self):
         clean_tab = ttk.Frame(self.notebook, padding=10)
-        self.notebook.add(clean_tab, text="정리")
+        self.notebook.add(clean_tab, text="Step 1. 정리")
 
         self.source_list = FileListFrame(
             clean_tab, title="정리할 원본 파일", on_add=self.add_source_files
@@ -124,7 +128,7 @@ class ContactCleanerApp(BaseClass):
 
     def _setup_compare_tab(self):
         compare_tab = ttk.Frame(self.notebook, padding=10)
-        self.notebook.add(compare_tab, text="대조")
+        self.notebook.add(compare_tab, text="Step 2. 대조")
 
         lists_container = ttk.Frame(compare_tab)
         lists_container.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
@@ -132,7 +136,8 @@ class ContactCleanerApp(BaseClass):
         self.compare_source_list = FileListFrame(
             lists_container, title="비교할 주소록", on_add=self.add_compare_source_files
         )
-        self.compare_source_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        self.compare_source_list.pack(
+            side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
         self.target_list = FileListFrame(
             lists_container,
@@ -151,19 +156,28 @@ class ContactCleanerApp(BaseClass):
 
     def _setup_merge_tab(self):
         merge_tab = ttk.Frame(self.notebook, padding=10)
-        self.notebook.add(merge_tab, text="병합")
+        self.notebook.add(merge_tab, text="Step 3. 병합")
 
         info_frame = ttk.Frame(merge_tab)
         info_frame.pack(fill=tk.X, pady=(0, 10))
 
         info_text = ttk.Label(
             info_frame,
-            text='파일명을 "{주소록 사용자 이름}_주소록.xlsx" 형식으로 수정하세요!\n예: 홍길동_주소록.xlsx',
+            text='파일명을 "{주소록 소유자명}_주소록.xlsx" 형식으로 수정하세요!\n예: 홍길동_주소록.xlsx',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
         )
         info_text.pack(anchor=tk.W)
+
+        notice_text = ttk.Label(
+            info_frame,
+            text='선택 시 대조 또는 정리한 파일의 "선택병합" 셀에 O(알파벳 O) 표시해주세요.',
+            foreground="#0066CC",
+            font=self.small_font,
+            justify=tk.LEFT
+        )
+        notice_text.pack(anchor=tk.W, pady=(5, 0))
 
         self.merge_list = FileListFrame(
             merge_tab, title="병합할 파일 목록", on_add=self.add_merge_files
@@ -219,7 +233,8 @@ class ContactCleanerApp(BaseClass):
         self._lock_ui()
         self.log_view.log("주소록 정리 작업을 시작합니다", "INFO")
 
-        thread = threading.Thread(target=self._clean_thread, args=(files,), daemon=True)
+        thread = threading.Thread(
+            target=self._clean_thread, args=(files,), daemon=True)
         thread.start()
 
     def start_comparison(self):
@@ -237,7 +252,8 @@ class ContactCleanerApp(BaseClass):
         self.log_view.log("데이터 대조 작업을 시작합니다", "INFO")
 
         thread = threading.Thread(
-            target=self._compare_thread, args=(source_files, target_files), daemon=True
+            target=self._compare_thread, args=(
+                source_files, target_files), daemon=True
         )
         thread.start()
 
@@ -295,12 +311,14 @@ class ContactCleanerApp(BaseClass):
             def on_save_progress(current, total):
                 pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
-            
+
             output_path = create_output_structure("병합", "변환")
-            save_styled_excel(merged_data, output_path, progress_callback=on_save_progress)
+            save_styled_excel(merged_data, output_path,
+                              progress_callback=on_save_progress)
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")
-            self.after(0, self.log_view.log, f"변환 완료: {len(merged_data)}개 항목", "SUCCESS", str(output_path))
+            self.after(0, self.log_view.log,
+                       f"변환 완료: {len(merged_data)}개 항목", "SUCCESS", str(output_path))
             self.after(0, lambda: self.source_list.clear_all())
             self.after(0, self._on_complete)
         except Exception as e:
@@ -322,9 +340,11 @@ class ContactCleanerApp(BaseClass):
                 processor = ContactProcessor(str(file_path))
                 result = processor.process()
                 for row in result.transformed_data:
-                    reference_transformed.append({"이름": row["이름"], "변환됨": row["변환됨"]})
-            
-            self.after(0, self.log_view.log, f"대조 대상 변환 완료 ({len(reference_transformed)}개)", "INFO")
+                    reference_transformed.append(
+                        {"이름": row["이름"], "변환됨": row["변환됨"]})
+
+            self.after(0, self.log_view.log,
+                       f"대조 대상 변환 완료 ({len(reference_transformed)}개)", "INFO")
 
             all_source = []
             for file_path in source_files:
@@ -335,14 +355,16 @@ class ContactCleanerApp(BaseClass):
                         all_source.append({"이름": row["이름"], "변환됨": row["변환됨"]})
 
             self.after(0, self.progress.update_progress, 0, 100, "대조 중")
-            merged_data = self._merge_and_deduplicate(all_source, reference_transformed)
+            merged_data = self._merge_and_deduplicate(
+                all_source, reference_transformed)
 
             def on_save_progress(current, total):
                 pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
 
             output_path = create_output_structure("병합", "대조")
-            save_styled_excel(merged_data, output_path, progress_callback=on_save_progress)
+            save_styled_excel(merged_data, output_path,
+                              progress_callback=on_save_progress)
 
             stats = {"O": 0, "△": 0, "X": 0}
             for row in merged_data:
@@ -351,7 +373,8 @@ class ContactCleanerApp(BaseClass):
                     stats[status] += 1
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")
-            self.after(0, self.log_view.log, f"대조 완료 (O:{stats['O']}, △:{stats['△']}, X:{stats['X']})", "SUCCESS", str(output_path))
+            self.after(0, self.log_view.log,
+                       f"대조 완료 (O:{stats['O']}, △:{stats['△']}, X:{stats['X']})", "SUCCESS", str(output_path))
             self.after(0, lambda: self.source_list.clear_all())
             self.after(0, lambda: self.target_list.clear_all())
             self.after(0, self._on_complete)
@@ -363,7 +386,8 @@ class ContactCleanerApp(BaseClass):
         from contact_cleaner.utils.file_utils import create_output_structure
         import openpyxl
         try:
-            self.after(0, self.log_view.log, f"{len(merge_files)}개 파일 로드 중", "INFO")
+            self.after(0, self.log_view.log,
+                       f"{len(merge_files)}개 파일 로드 중", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 로드 중")
 
             all_data = []
@@ -392,40 +416,45 @@ class ContactCleanerApp(BaseClass):
 
                         if phone:
                             all_data.append({
-                                "주소록 주인": owner_name,
+                                "주소록 소유자명": owner_name,
                                 "이름": name or "",
                                 "변환됨": phone,
                                 "추천1": rec1 or "",
                                 "추천2": rec2 or "",
                                 "추천3": rec3 or "",
-                                "추천4": rec4 or "",
+                                "선택병합": rec4 or "",
                                 "파일명": filename or ""
                             })
                     wb.close()
                 except Exception as e:
-                    self.after(0, self.log_view.log, f"{Path(file_path).name} 로드 실패: {str(e)}", "WARNING")
+                    self.after(
+                        0, self.log_view.log, f"{Path(file_path).name} 로드 실패: {str(e)}", "WARNING")
 
             if invalid_files:
-                self.after(0, self.log_view.log, f"파일명 형식 오류: {', '.join(invalid_files)}", "WARNING")
+                self.after(0, self.log_view.log,
+                           f"파일명 형식 오류: {', '.join(invalid_files)}", "WARNING")
 
             if not all_data:
                 self.after(0, self.log_view.log, "병합할 데이터가 없습니다.", "ERROR")
                 self.after(0, self._unlock_ui)
                 return
 
-            self.after(0, self.log_view.log, f"총 {len(all_data)}개 항목 로드 완료", "INFO")
+            self.after(0, self.log_view.log,
+                       f"총 {len(all_data)}개 항목 로드 완료", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "중복 제거 중")
 
             merged_data = self._merge_with_check(all_data)
 
-            self.after(0, self.log_view.log, f"중복 제거 후 {len(merged_data)}개 항목", "INFO")
+            self.after(0, self.log_view.log,
+                       f"중복 제거 후 {len(merged_data)}개 항목", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 저장 중")
 
             output_path = create_output_structure("병합", "최종병합")
             self._save_merged_excel(merged_data, output_path)
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")
-            self.after(0, self.log_view.log, f"병합 완료: {len(merged_data)}개 항목", "SUCCESS", str(output_path))
+            self.after(0, self.log_view.log,
+                       f"병합 완료: {len(merged_data)}개 항목", "SUCCESS", str(output_path))
             self.after(0, lambda: self.merge_list.clear_all())
             self.after(0, self._on_complete)
         except Exception as e:
@@ -456,19 +485,19 @@ class ContactCleanerApp(BaseClass):
             name = item["이름"]
             key = (name, phone)
 
-            rec4_checked = is_checked(item.get("추천4", ""))
+            rec4_checked = is_checked(item.get("선택병합", ""))
 
             if key not in merged:
                 merged[key] = []
 
             merged[key].append({
-                "주소록 주인": item["주소록 주인"],
+                "주소록 소유자명": item["주소록 소유자명"],
                 "이름": name,
                 "변환됨": phone,
                 "추천1": item.get("추천1", ""),
                 "추천2": item.get("추천2", ""),
                 "추천3": item.get("추천3", ""),
-                "추천4": item.get("추천4", ""),
+                "선택병합": item.get("선택병합", ""),
                 "파일명": item.get("파일명", ""),
                 "checked": rec4_checked
             })
@@ -490,24 +519,27 @@ class ContactCleanerApp(BaseClass):
         if not ws:
             return
 
-        ws.append([])
+        ws.append(['*선택병합 시에는 (해당 열에 "O" 표시해 주세요.)'])
 
         headers = [
             "연번",
-            "주소록 주인",
+            "주소록 소유자명",
             "이름 (휴대폰에 저장될 이름)",
             "휴대폰번호",
             "추천1(DW)",
             "추천2",
             "추천3(비교대상과체크)",
-            "추천4",
+            "선택병합",
             "휴대폰 저장파일명",
         ]
         ws.append(headers)
 
-        gray_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
-        yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+        gray_fill = PatternFill(start_color="D3D3D3",
+                                end_color="D3D3D3", fill_type="solid")
+        yellow_fill = PatternFill(
+            start_color="FFFF00", end_color="FFFF00", fill_type="solid")
         header_font = Font(name="Malgun Gothic", size=11, bold=False)
+        header_font_red = Font(name="Malgun Gothic", size=11, bold=False, color="FF0000")
         center_alignment = Alignment(horizontal="center", vertical="center")
         thin_border = Border(
             left=Side(style="thin"),
@@ -518,7 +550,10 @@ class ContactCleanerApp(BaseClass):
 
         for col_idx in range(1, 10):
             cell = ws.cell(row=2, column=col_idx)
-            cell.font = header_font
+            if col_idx == 8:
+                cell.font = header_font_red
+            else:
+                cell.font = header_font
             cell.alignment = center_alignment
             cell.border = thin_border
             cell.fill = gray_fill
@@ -526,13 +561,14 @@ class ContactCleanerApp(BaseClass):
         for idx, item in enumerate(data, start=1):
             current_row = idx + 2
             ws.cell(row=current_row, column=1, value=idx)
-            ws.cell(row=current_row, column=2, value=item.get("주소록 주인", ""))
+            ws.cell(row=current_row, column=2, value=item.get("주소록 소유자명", ""))
             ws.cell(row=current_row, column=3, value=item.get("이름", "") or " ")
-            ws.cell(row=current_row, column=4, value=item.get("변환됨", "") or " ")
+            ws.cell(row=current_row, column=4,
+                    value=item.get("변환됨", "") or " ")
             ws.cell(row=current_row, column=5, value=item.get("추천1", ""))
             ws.cell(row=current_row, column=6, value=item.get("추천2", ""))
             ws.cell(row=current_row, column=7, value=item.get("추천3", ""))
-            ws.cell(row=current_row, column=8, value=item.get("추천4", ""))
+            ws.cell(row=current_row, column=8, value=item.get("선택병합", ""))
             ws.cell(row=current_row, column=9, value=item.get("파일명", ""))
 
             for col_idx in range(1, 10):
@@ -568,21 +604,21 @@ class ContactCleanerApp(BaseClass):
         self, left_data: list[dict], right_data: list[dict]
     ) -> list[dict]:
         import re
-        
+
         def clean_name(name: str) -> str:
             if not name:
                 return ""
             name = name.strip()
             name = re.sub(r'[\d\-\+\(\)\s]+', '', name)
             return name
-        
+
         right_by_phone: dict[str, list[tuple[int, dict]]] = {}
         for idx, item in enumerate(right_data):
             phone = item["변환됨"]
             if phone not in right_by_phone:
                 right_by_phone[phone] = []
             right_by_phone[phone].append((idx, item))
-        
+
         result = []
         matched_right_indices = set()
 
@@ -592,8 +628,9 @@ class ContactCleanerApp(BaseClass):
             left_name_clean = clean_name(left_name)
 
             candidates = right_by_phone.get(left_phone, [])
-            available = [(idx, item) for idx, item in candidates if idx not in matched_right_indices]
-            
+            available = [(idx, item) for idx,
+                         item in candidates if idx not in matched_right_indices]
+
             if not available:
                 result.append({
                     "이름": left_name,
@@ -602,14 +639,15 @@ class ContactCleanerApp(BaseClass):
                     "검증": "X",
                 })
                 continue
-            
+
             name_match_found = False
             phone_only_matches = []
-            
+
             for right_idx, right_item in available:
-                right_name = right_item["이름"].strip() if right_item["이름"] else ""
+                right_name = right_item["이름"].strip(
+                ) if right_item["이름"] else ""
                 right_name_clean = clean_name(right_name)
-                
+
                 if left_name_clean and right_name_clean:
                     if left_name_clean in right_name_clean or right_name_clean in left_name_clean:
                         result.append({
@@ -634,10 +672,10 @@ class ContactCleanerApp(BaseClass):
                     matched_right_indices.add(right_idx)
                     name_match_found = True
                     break
-            
+
             if name_match_found:
                 continue
-            
+
             if phone_only_matches:
                 result.append({
                     "이름": left_name,
@@ -677,7 +715,8 @@ class ContactCleanerApp(BaseClass):
             path = Path(f_path)
             rows = []
             if path.suffix.lower() in [".xlsx", ".xls"]:
-                wb = openpyxl.load_workbook(f_path, read_only=True, data_only=True)
+                wb = openpyxl.load_workbook(
+                    f_path, read_only=True, data_only=True)
                 ws = wb.active
                 if ws:
                     for row in ws.iter_rows(values_only=True):
@@ -685,7 +724,8 @@ class ContactCleanerApp(BaseClass):
                             name_val = str(row[0]) if row[0] else ""
                             phone_val = str(row[1]) if row[1] else ""
                             rows.append((name_val, phone_val))
-                            all_rows.append({"이름": name_val, "전화번호": phone_val})
+                            all_rows.append(
+                                {"이름": name_val, "전화번호": phone_val})
                 wb.close()
             else:
                 for enc in ["utf-8", "cp949", "utf-8-sig"]:
