@@ -100,6 +100,9 @@ class ContactCleanerApp(BaseClass):
             'Malgun Gothic', 13, 'bold'))
         style.configure('TLabel', font=('Malgun Gothic', 12))
         style.configure('TProgressbar', thickness=100)
+        
+        # Custom action button style with green color
+        style.configure('Action.TButton', font=('Malgun Gothic', 12, 'bold'))
 
         # Calculate notebook height based on window height
         self._notebook_height = int(self._win_height * 0.55)
@@ -133,24 +136,31 @@ class ContactCleanerApp(BaseClass):
         v_label.place(relx=1.0, rely=1.0, x=-10, y=-5, anchor="se")
 
     def _on_tab_changed(self, event):
-        """Hide log/progress when on help tab and expand notebook to fill space"""
+        """Hide log/progress when on help tab"""
         current_tab = self.notebook.index(self.notebook.select())
         if current_tab == 3:  # Help tab (0-indexed)
             self.bottom_section.pack_forget()
-            # Expand notebook to fill entire space
-            self.notebook.pack_forget()
-            self.notebook.configure(height=0)  # Remove fixed height
-            self.notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         else:
-            # Restore normal layout
-            self.notebook.pack_forget()
-            self.notebook.configure(height=self._notebook_height)
-            self.notebook.pack(fill=tk.X, pady=(0, 15))
-            self.bottom_section.pack(fill=tk.BOTH, expand=True)
+            # Ensure bottom_section is visible
+            if not self.bottom_section.winfo_ismapped():
+                self.bottom_section.pack(fill=tk.BOTH, expand=True)
 
     def _setup_clean_tab(self):
         clean_tab = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(clean_tab, text="Step 1. 정리")
+
+        # Warning notice about required column headers
+        info_frame = ttk.Frame(clean_tab)
+        info_frame.pack(fill=tk.X, pady=(0, 10))
+
+        info_text = ttk.Label(
+            info_frame,
+            text='원본 파일에 "이름", "휴대폰번호" 또는 "성", "이름", "Mobile Phone" 등의\n컬럼 헤더가 포함되어 있어야 합니다.',
+            foreground="#FF6600",
+            font=self.small_font,
+            justify=tk.LEFT
+        )
+        info_text.pack(anchor=tk.W)
 
         self.source_list = FileListFrame(
             clean_tab, title="정리할 원본 파일", on_add=self.add_source_files
@@ -159,7 +169,7 @@ class ContactCleanerApp(BaseClass):
 
         self.clean_btn = ttk.Button(
             clean_tab,
-            text="주소록 정리 시작",
+            text="▶ 주소록 정리 시작",
             style="Accent.TButton",
             command=self.start_cleaning,
         )
@@ -191,7 +201,7 @@ class ContactCleanerApp(BaseClass):
 
         self.compare_btn = ttk.Button(
             compare_tab,
-            text="데이터 대조 시작",
+            text="▶ 데이터 대조 시작",
             style="Accent.TButton",
             command=self.start_comparison,
         )
@@ -229,7 +239,7 @@ class ContactCleanerApp(BaseClass):
 
         self.merge_btn = ttk.Button(
             merge_tab,
-            text="병합 시작",
+            text="▶ 병합 시작",
             style="Accent.TButton",
             command=self.start_merge,
         )

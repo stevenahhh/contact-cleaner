@@ -53,10 +53,8 @@ class FileListFrame(ttk.LabelFrame):
                 justify=tk.CENTER
             )
             self.hint_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-            self.hint_label.lower()  # Place behind listbox initially
-            
-            # Bind events to show/hide hint
-            self.listbox.bind('<<ListboxSelect>>', lambda e: self._update_hint_visibility())
+            # Show hint immediately since list is empty on init
+            self.hint_label.lift()
         
         self._setup_drag_drop()
 
