@@ -16,40 +16,62 @@ from contact_cleaner.gui.widgets import (
     ProgressFrame,
     LogFrame,
 )
-from contact_cleaner.core.processor import ContactProcessor
-from contact_cleaner.utils.file_utils import (
-    create_output_structure,
-    copy_original_file,
-    save_transformed_csv,
-    save_styled_excel,
-    open_folder_in_explorer,
-    get_work_folder,
-)
 
 
 class ContactCleanerApp(tk.Tk):
     def __init__(self):
         super().__init__()
+        
+        self.withdraw()
 
-        self.title("주소록 정리 v1.3.0")
-        self.geometry("900x800")
-        self.minsize(800, 600)
+        try:
+            from ctypes import windll
+            windll.shcore.SetProcessDpiAwareness(1)
+        except:
+            pass
 
         init_theme(self)
+        
+        try:
+            from ctypes import windll
+            dpi = windll.user32.GetDpiForSystem()
+            scale_factor = dpi / 96.0
+        except:
+            scale_factor = 1.0
+        
+        self.tk.call('tk', 'scaling', scale_factor * 1.25)
+
+        self.title("주소록 정리 v1.3.0")
+        self.geometry("1150x950")
+        self.minsize(1150, 950)
+        self.maxsize(1150, 950)
+        self.resizable(False, False)
+        
         self._setup_ui()
+        
+        self.update_idletasks()
+        self.deiconify()
 
     def _setup_ui(self):
         from tkinter import font as tkfont
 
-        self.header_font = tkfont.Font(family="Malgun Gothic", size=20, weight="bold")
+        self.header_font = tkfont.Font(family="Malgun Gothic", size=24, weight="bold")
         self.default_font_bold = tkfont.Font(
-            family="Malgun Gothic", size=10, weight="bold"
+            family="Malgun Gothic", size=12, weight="bold"
         )
-        self.small_font = tkfont.Font(family="Malgun Gothic", size=9)
-        self.version_font = tkfont.Font(family="Malgun Gothic", size=8)
+        self.small_font = tkfont.Font(family="Malgun Gothic", size=11)
+        self.version_font = tkfont.Font(family="Malgun Gothic", size=10)
 
         main_container = ttk.Frame(self, padding=20)
         main_container.pack(fill=tk.BOTH, expand=True)
+
+        style = ttk.Style()
+        style.configure('TNotebook.Tab', padding=[20, 10], font=('Malgun Gothic', 12))
+        style.configure('TButton', font=('Malgun Gothic', 12))
+        style.configure('Accent.TButton', font=('Malgun Gothic', 12))
+        style.configure('TLabelframe.Label', font=('Malgun Gothic', 13, 'bold'))
+        style.configure('TLabel', font=('Malgun Gothic', 12))
+        style.configure('TProgressbar', thickness=25)
 
         self.notebook = ttk.Notebook(main_container)
         self.notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
@@ -100,7 +122,7 @@ class ContactCleanerApp(tk.Tk):
         lists_container.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
         self.compare_source_list = FileListFrame(
-            lists_container, title="정리할 원본 파일", on_add=self.add_compare_source_files
+            lists_container, title="비교할 주소록", on_add=self.add_compare_source_files
         )
         self.compare_source_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
@@ -128,7 +150,7 @@ class ContactCleanerApp(tk.Tk):
 
         info_text = ttk.Label(
             info_frame,
-            text='※ 파일명을 "주소록_{주인이름}_대조결과.xlsx" 형식으로 수정하세요!\n   예: 대조결과_260121.xlsx → 주소록_양선아_대조결과.xlsx',
+            text='파일명을 "주소록_{주인이름}_대조결과.xlsx" 형식으로 수정하세요!\n예: 대조결과_260121.xlsx → 주소록_홍길동_대조결과.xlsx',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
@@ -183,7 +205,7 @@ class ContactCleanerApp(tk.Tk):
     def start_cleaning(self):
         files = self.source_list.get_files()
         if not files:
-            messagebox.showwarning("경고", "정리할 원본 파일을 선택해주세요.")
+            self.log_view.log("정리할 원본 파일을 선택해주세요.", "WARNING")
             return
 
         self._lock_ui()
@@ -197,10 +219,10 @@ class ContactCleanerApp(tk.Tk):
         target_files = self.target_list.get_files()
 
         if not source_files:
-            messagebox.showwarning("경고", "대조할 원본 파일을 선택해주세요.")
+            self.log_view.log("대조할 원본 파일을 선택해주세요.", "WARNING")
             return
         if not target_files:
-            messagebox.showwarning("경고", "대조 대상 파일(우측)을 선택해주세요.")
+            self.log_view.log("대조 대상 파일을 선택해주세요.", "WARNING")
             return
 
         self._lock_ui()
@@ -215,7 +237,7 @@ class ContactCleanerApp(tk.Tk):
         merge_files = self.merge_list.get_files()
 
         if not merge_files:
-            messagebox.showwarning("경고", "병합할 파일을 선택해주세요.")
+            self.log_view.log("병합할 파일을 선택해주세요.", "WARNING")
             return
 
         self._lock_ui()
@@ -238,6 +260,11 @@ class ContactCleanerApp(tk.Tk):
         self.merge_btn.configure(state="normal")
 
     def _clean_thread(self, files):
+        from contact_cleaner.core.processor import ContactProcessor
+        from contact_cleaner.utils.file_utils import (
+            create_output_structure,
+            save_styled_excel,
+        )
         try:
             self.after(
                 0, self.log_view.log, f"{len(files)}개 파일 변환 시작...", "INFO"
@@ -262,7 +289,7 @@ class ContactCleanerApp(tk.Tk):
             save_styled_excel(merged_data, output_path)
 
             self.after(
-                0, self.log_view.log, f"변환 완료: {len(merged_data)}개 항목", "SUCCESS"
+                0, self.log_view.log, f"변환 완료: {len(merged_data)}개 항목", "SUCCESS", str(output_path)
             )
             self.after(0, lambda: self.source_list.clear_all())
             self.after(0, self._on_complete)
@@ -271,6 +298,11 @@ class ContactCleanerApp(tk.Tk):
             self.after(0, self._unlock_ui)
 
     def _compare_thread(self, source_files, target_files):
+        from contact_cleaner.core.processor import ContactProcessor
+        from contact_cleaner.utils.file_utils import (
+            create_output_structure,
+            save_styled_excel,
+        )
         try:
             self.after(
                 0, self.log_view.log, "대조 대상 파일을 변환 중입니다...", "INFO"
@@ -313,6 +345,7 @@ class ContactCleanerApp(tk.Tk):
                 self.log_view.log,
                 f"대조 완료 (O:{stats['O']}, △:{stats['△']}, X:{stats['X']})",
                 "SUCCESS",
+                str(output_path)
             )
 
             self.after(0, lambda: self.source_list.clear_all())
@@ -323,11 +356,9 @@ class ContactCleanerApp(tk.Tk):
             self.after(0, self._unlock_ui)
 
     def _merge_thread(self, merge_files):
+        from contact_cleaner.utils.file_utils import create_output_structure
+        import openpyxl
         try:
-            import openpyxl
-            import re
-            from datetime import datetime
-
             self.after(0, self.log_view.log, f"{len(merge_files)}개 파일 로드 중...", "INFO")
             self.after(0, self.progress.update_progress, 1, 3, "파일 로드 중...")
 
@@ -389,7 +420,7 @@ class ContactCleanerApp(tk.Tk):
             output_path = create_output_structure("병합", "최종병합")
             self._save_merged_excel(merged_data, output_path)
 
-            self.after(0, self.log_view.log, f"병합 완료: {len(merged_data)}개 항목", "SUCCESS")
+            self.after(0, self.log_view.log, f"병합 완료: {len(merged_data)}개 항목", "SUCCESS", str(output_path))
             self.after(0, lambda: self.merge_list.clear_all())
             self.after(0, self._on_complete)
         except Exception as e:
@@ -521,6 +552,7 @@ class ContactCleanerApp(tk.Tk):
         wb.save(path)
 
     def _process_reference_files(self, target_files) -> list[dict]:
+        from contact_cleaner.core.processor import ContactProcessor
         transformed = []
         for f_path in target_files:
             processor = ContactProcessor(str(f_path))
@@ -736,6 +768,7 @@ class ContactCleanerApp(tk.Tk):
         return merged
 
     def _on_complete(self):
+        from contact_cleaner.utils.file_utils import get_work_folder, open_folder_in_explorer
         self.progress.complete()
         self._unlock_ui()
 

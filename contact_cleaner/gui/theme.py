@@ -20,10 +20,10 @@ def init_theme(root: tk.Tk) -> None:
     family = "Malgun Gothic"
 
     default_font = font.nametofont("TkDefaultFont")
-    default_font.configure(family=family, size=10)
+    default_font.configure(family=family, size=12)
 
     text_font = font.nametofont("TkTextFont")
-    text_font.configure(family=family, size=10)
+    text_font.configure(family=family, size=12)
 
     theme = get_system_theme()
     apply_theme(theme)

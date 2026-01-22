@@ -9,9 +9,9 @@ class FileListFrame(ttk.LabelFrame):
         self, parent, title="선택된 파일", on_add: Optional[Callable] = None, **kwargs
     ):
         self.title_base = title
-        super().__init__(parent, text=f"{self.title_base} (0개)", padding=10, **kwargs)
+        super().__init__(parent, text=f"{self.title_base} (0개)", padding=15, **kwargs)
         self.files: List[str] = []
-        self._listbox_font = tkfont.Font(family="Malgun Gothic", size=10)
+        self._listbox_font = tkfont.Font(family="Malgun Gothic", size=11)
         self._setup_ui(on_add)
 
     def _setup_ui(self, on_add):
@@ -26,8 +26,10 @@ class FileListFrame(ttk.LabelFrame):
             highlightthickness=1,
             relief="flat",
             font=self._listbox_font,
+            exportselection=False,
         )
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.listbox.bind('<Configure>', lambda e: None)
 
         scrollbar = ttk.Scrollbar(
             list_frame, orient="vertical", command=self.listbox.yview
@@ -74,8 +76,9 @@ class FileListFrame(ttk.LabelFrame):
 
 class LogFrame(ttk.LabelFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, text="로그 메시지", padding=10, **kwargs)
-        self._log_font = tkfont.Font(family="Malgun Gothic", size=9)
+        super().__init__(parent, text="로그 메시지", padding=15, **kwargs)
+        self._log_font = tkfont.Font(family="Malgun Gothic", size=11)
+        self._link_font = tkfont.Font(family="Malgun Gothic", size=11, underline=True)
         self._setup_ui()
 
     def _setup_ui(self):
@@ -87,21 +90,28 @@ class LogFrame(ttk.LabelFrame):
             wrap=tk.WORD,
             bd=0,
             highlightthickness=1,
+            cursor="arrow",
+            exportselection=False,
         )
         self.text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.text_area.bind('<Configure>', lambda e: None)
 
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.text_area.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.text_area.config(yscrollcommand=scrollbar.set)
 
-        # 색상 태그 설정
         self.text_area.tag_configure("INFO", foreground="#2196F3")
         self.text_area.tag_configure("SUCCESS", foreground="#4CAF50")
         self.text_area.tag_configure("WARNING", foreground="#FF9800")
         self.text_area.tag_configure("ERROR", foreground="#F44336")
         self.text_area.tag_configure("TIME", foreground="#888888")
+        self.text_area.tag_configure("LINK", foreground="#1976D2", font=self._link_font)
 
-    def log(self, message: str, level: str = "INFO"):
+        self.text_area.tag_bind("LINK", "<Button-1>", self._on_link_click)
+        self.text_area.tag_bind("LINK", "<Enter>", lambda e: self.text_area.config(cursor="hand2"))
+        self.text_area.tag_bind("LINK", "<Leave>", lambda e: self.text_area.config(cursor="arrow"))
+
+    def log(self, message: str, level: str = "INFO", link: str = ""):
         self.text_area.config(state=tk.NORMAL)
 
         timestamp = datetime.now().strftime("[%H:%M:%S] ")
@@ -114,9 +124,31 @@ class LogFrame(ttk.LabelFrame):
         elif level == "ERROR":
             self.text_area.insert(tk.END, "✘ ", "ERROR")
 
-        self.text_area.insert(tk.END, f"{message}\n", level)
+        self.text_area.insert(tk.END, f"{message}", level)
+
+        if link:
+            self.text_area.insert(tk.END, "\n  → ", level)
+            link_tag = f"link_{id(link)}"
+            self.text_area.tag_configure(link_tag, foreground="#1976D2", font=self._link_font)
+            self.text_area.tag_bind(link_tag, "<Button-1>", lambda e, p=link: self._open_folder(p))
+            self.text_area.tag_bind(link_tag, "<Enter>", lambda e: self.text_area.config(cursor="hand2"))
+            self.text_area.tag_bind(link_tag, "<Leave>", lambda e: self.text_area.config(cursor="arrow"))
+            self.text_area.insert(tk.END, link, link_tag)
+
+        self.text_area.insert(tk.END, "\n")
         self.text_area.see(tk.END)
         self.text_area.config(state=tk.DISABLED)
+
+    def _on_link_click(self, event):
+        pass
+
+    def _open_folder(self, path: str):
+        from pathlib import Path
+        from contact_cleaner.utils.file_utils import open_folder_in_explorer
+        
+        file_path = Path(path)
+        if file_path.exists():
+            open_folder_in_explorer(file_path)
 
     def clear(self):
         self.text_area.config(state=tk.NORMAL)
@@ -126,17 +158,17 @@ class LogFrame(ttk.LabelFrame):
 
 class StatusLegend(ttk.LabelFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, text="상태 설명", padding=10, **kwargs)
+        super().__init__(parent, text="상태 설명", padding=12, **kwargs)
 
         items = [("O", "이름 유사 + 번호 일치"), ("△", "번호만 일치"), ("X", "매칭 없음")]
 
         self._legend_sym_font = tkfont.Font(
-            family="Malgun Gothic", size=9, weight="bold"
+            family="Malgun Gothic", size=11, weight="bold"
         )
 
         for symbol, desc in items:
             row = ttk.Frame(self)
-            row.pack(fill=tk.X, pady=2)
+            row.pack(fill=tk.X, pady=3)
 
             lbl_sym = ttk.Label(
                 row, text=symbol, width=4, anchor="center", font=self._legend_sym_font
@@ -162,7 +194,7 @@ class ProgressFrame(ttk.Frame):
         )
         self.progressbar.pack(fill=tk.X)
 
-        self._small_font = tkfont.Font(family="Malgun Gothic", size=9)
+        self._small_font = tkfont.Font(family="Malgun Gothic", size=11)
         self.count_label = ttk.Label(self, text="", anchor="e", font=self._small_font)
         self.count_label.pack(fill=tk.X, pady=(5, 0))
 
