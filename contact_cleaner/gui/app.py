@@ -158,7 +158,7 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='파일명을 "주소록_{주인이름}_대조결과.xlsx" 형식으로 수정하세요!\n예: 대조결과_260121.xlsx → 주소록_홍길동_대조결과.xlsx',
+            text='파일명을 "{이름}_주소록.xlsx" 형식으로 수정하세요!\n예: 홍길동_주소록.xlsx',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
@@ -435,7 +435,7 @@ class ContactCleanerApp(BaseClass):
     def _extract_owner_name(self, file_path: str) -> str:
         import re
         filename = Path(file_path).stem
-        match = re.search(r'주소록[_\s]*([^_\s]+)', filename)
+        match = re.search(r'([^_\s]+)[_\s]*주소록', filename)
         if match:
             return match.group(1)
         return ""
