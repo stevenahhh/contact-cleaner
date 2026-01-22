@@ -10,15 +10,35 @@ from .normalizer import normalize_phone_number
 class ColumnDetector:
     SAMPLE_SIZE = 100
 
-    NAME_PATTERNS = [
+    SURNAME_PATTERNS = [
+        "성",
+        "Last Name",
+        "last_name",
+        "lastname",
+        "surname",
+    ]
+    
+    FIRST_NAME_PATTERNS = [
+        "이름",
         "First Name",
         "first_name",
         "firstname",
+        "given name",
+    ]
+    
+    MIDDLE_NAME_PATTERNS = [
+        "Middle Name",
+        "middle_name",
+        "middlename",
+    ]
+    
+    FULL_NAME_PATTERNS = [
         "Name",
         "name",
-        "이름",
         "성명",
         "성함",
+        "Full Name",
+        "full_name",
     ]
 
     PHONE_PATTERNS = [
@@ -91,7 +111,7 @@ class ColumnDetector:
             try:
                 with open(self.file_path, "r", encoding=enc, newline="") as f:
                     reader = csv.DictReader(f)
-                    self._headers = list(reader.fieldnames) if reader.fieldnames else []
+                    self._headers = [self._clean_header(h) for h in reader.fieldnames] if reader.fieldnames else []
                     self._sample_rows = []
                     for i, row in enumerate(reader):
                         if i >= self.SAMPLE_SIZE:
@@ -105,21 +125,64 @@ class ColumnDetector:
         raise ValueError(
             f"Cannot read CSV file with supported encodings: {self.file_path}"
         )
+    
+    def _clean_header(self, header: str) -> str:
+        if not header:
+            return header
+        cleaned = header.strip()
+        cleaned = cleaned.lstrip('\ufeff')
+        if cleaned.startswith('"') and cleaned.endswith('"'):
+            cleaned = cleaned[1:-1]
+        if cleaned.startswith("'") and cleaned.endswith("'"):
+            cleaned = cleaned[1:-1]
+        return cleaned.strip()
 
     def get_headers(self) -> list[str]:
         return self._headers.copy()
 
-    def detect_name_column(self) -> Optional[str]:
-        for pattern in self.NAME_PATTERNS:
+    def detect_name_columns(self) -> dict[str, Optional[str]]:
+        result: dict[str, Optional[str]] = {
+            "surname": None,
+            "first_name": None,
+            "middle_name": None,
+            "full_name": None
+        }
+        
+        for pattern in self.SURNAME_PATTERNS:
             for header in self._headers:
                 if pattern.lower() == header.lower().strip():
-                    return header
-
-        for pattern in self.NAME_PATTERNS:
+                    result["surname"] = header
+                    break
+            if result["surname"]:
+                break
+        
+        for pattern in self.FIRST_NAME_PATTERNS:
             for header in self._headers:
-                if pattern.lower() in header.lower():
-                    return header
-
+                if pattern.lower() == header.lower().strip():
+                    result["first_name"] = header
+                    break
+            if result["first_name"]:
+                break
+        
+        for pattern in self.MIDDLE_NAME_PATTERNS:
+            for header in self._headers:
+                if pattern.lower() == header.lower().strip():
+                    result["middle_name"] = header
+                    break
+            if result["middle_name"]:
+                break
+        
+        for pattern in self.FULL_NAME_PATTERNS:
+            for header in self._headers:
+                if pattern.lower() == header.lower().strip():
+                    result["full_name"] = header
+                    break
+            if result["full_name"]:
+                break
+        
+        return result
+    
+    def detect_name_column(self) -> Optional[str]:
         return self._headers[0] if self._headers else None
 
     def detect_phone_column(self) -> Optional[str]:

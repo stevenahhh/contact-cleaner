@@ -24,7 +24,7 @@ class ContactProcessor:
     def process(self) -> ProcessResult:
         self.detector = ColumnDetector(str(self.file_path))
 
-        name_col = self.detector.detect_name_column()
+        name_columns = self.detector.detect_name_columns()
         phone_col = self.detector.detect_phone_column()
         encoding = self.detector.encoding
 
@@ -36,7 +36,7 @@ class ContactProcessor:
         rows = self._read_rows(encoding)
 
         for row in rows:
-            name = row.get(name_col, "").strip() if name_col else ""
+            name = self._extract_name_from_row(row, name_columns)
 
             all_phones = self._find_all_valid_phones_in_row(row)
             
@@ -87,9 +87,63 @@ class ContactProcessor:
             comparison_data=comparison_data,
             stats=stats,
             detected_phone_col=phone_col,
-            detected_name_col=name_col,
+            detected_name_col=self._get_name_col_summary(name_columns),
             encoding=encoding,
         )
+    
+    def _extract_name_from_row(self, row: dict, name_columns: dict[str, Optional[str]]) -> str:
+        surname = self._clean_value(row.get(name_columns["surname"], "")) if name_columns["surname"] else ""
+        first_name = self._clean_value(row.get(name_columns["first_name"], "")) if name_columns["first_name"] else ""
+        middle_name = self._clean_value(row.get(name_columns["middle_name"], "")) if name_columns["middle_name"] else ""
+        full_name = self._clean_value(row.get(name_columns["full_name"], "")) if name_columns["full_name"] else ""
+        
+        if surname and first_name:
+            if first_name == "'" or first_name == '"':
+                return surname
+            parts = [surname, first_name]
+            if middle_name and middle_name not in ("'", '"'):
+                parts.append(middle_name)
+            return " ".join(parts)
+        elif surname:
+            return surname
+        elif first_name:
+            if first_name in ("'", '"'):
+                return ""
+            parts = [first_name]
+            if middle_name and middle_name not in ("'", '"'):
+                parts.append(middle_name)
+            return " ".join(parts)
+        elif full_name:
+            return full_name
+        else:
+            for value in row.values():
+                cleaned = self._clean_value(value)
+                if cleaned and cleaned not in ("'", '"'):
+                    return cleaned
+            return ""
+    
+    def _clean_value(self, value: str) -> str:
+        if not value:
+            return ""
+        cleaned = str(value).strip()
+        if cleaned == "'":
+            return ""
+        if cleaned.startswith("'") and len(cleaned) > 1:
+            cleaned = cleaned[1:]
+        return cleaned.strip()
+    
+    def _get_name_col_summary(self, name_columns: dict[str, Optional[str]]) -> Optional[str]:
+        cols = []
+        if name_columns["surname"]:
+            cols.append(name_columns["surname"])
+        if name_columns["first_name"]:
+            cols.append(name_columns["first_name"])
+        if name_columns["middle_name"]:
+            cols.append(name_columns["middle_name"])
+        if name_columns["full_name"]:
+            cols.append(name_columns["full_name"])
+        
+        return "+".join(cols) if cols else None
 
     def _find_all_valid_phones_in_row(self, row: dict) -> list[str]:
         phones = []
