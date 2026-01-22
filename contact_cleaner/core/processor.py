@@ -137,9 +137,17 @@ class ContactProcessor:
                 return ""
             
             for header, value in row.items():
+                # Skip sequence number columns (순번, 번호, No, etc.)
+                header_lower = header.lower().strip()
+                if header_lower in ("순번", "번호", "no", "no.", "#", "index", "순서", "seq"):
+                    continue
+                
                 from .normalizer import normalize_phone_number
                 cleaned = self._clean_value(value)
                 if cleaned and cleaned not in ("'", '"'):
+                    # Skip if value is purely numeric (likely a sequence number)
+                    if cleaned.isdigit():
+                        continue
                     result = normalize_phone_number(cleaned)
                     if result.status != "valid":
                         return cleaned
