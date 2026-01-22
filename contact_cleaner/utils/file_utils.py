@@ -67,6 +67,7 @@ def save_styled_excel(data: list[dict], path: Path) -> None:
 
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -88,10 +89,9 @@ def save_styled_excel(data: list[dict], path: Path) -> None:
     ws.append(headers)
 
     gray_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
-    yellow_fill = PatternFill(
-        start_color="FFFF00", end_color="FFFF00", fill_type="solid"
-    )
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     header_font = Font(name="Malgun Gothic", size=11, bold=False)
+    data_font = Font(name="Malgun Gothic", size=10)
     center_alignment = Alignment(horizontal="center", vertical="center")
     thin_border = Border(
         left=Side(style="thin"),
@@ -100,39 +100,37 @@ def save_styled_excel(data: list[dict], path: Path) -> None:
         bottom=Side(style="thin"),
     )
 
-    for col_idx in [1, 2, 3, 4, 5, 6, 7, 8]:
+    for col_idx in range(1, 9):
         cell = ws.cell(row=2, column=col_idx)
         cell.font = header_font
         cell.alignment = center_alignment
         cell.border = thin_border
         cell.fill = gray_fill
 
+    current_row = 3
     for idx, item in enumerate(data, start=1):
-        current_row = ws.max_row + 1
-        ws.cell(row=current_row, column=1, value=idx)
+        name_value = item.get("이름", "") or " "
+        phone_value = item.get("변환됨") or item.get("원본 전화번호") or " "
+        verification = item.get("검증", "")
         
-        name_value = item.get("이름", "")
-        if not name_value or name_value is None:
-            name_value = " "
-        ws.cell(row=current_row, column=2, value=name_value)
-        
-        phone_value = item.get("변환됨") or item.get("원본 전화번호")
-        if not phone_value or phone_value is None:
-            phone_value = " "
-        ws.cell(row=current_row, column=3, value=phone_value)
-        
-        ws.cell(row=current_row, column=6, value=item.get("검증", ""))
+        c1 = ws.cell(row=current_row, column=1, value=idx)
+        c2 = ws.cell(row=current_row, column=2, value=name_value)
+        c3 = ws.cell(row=current_row, column=3, value=phone_value)
+        c4 = ws.cell(row=current_row, column=4)
+        c5 = ws.cell(row=current_row, column=5)
+        c6 = ws.cell(row=current_row, column=6, value=verification)
+        c7 = ws.cell(row=current_row, column=7)
+        c8 = ws.cell(row=current_row, column=8)
 
-        for col_idx in [1, 2, 3, 4, 5, 6, 7, 8]:
-            cell = ws.cell(row=current_row, column=col_idx)
-            cell.border = thin_border
-            cell.font = Font(name="Malgun Gothic", size=10)
-            if col_idx in [1, 6]:
-                cell.alignment = center_alignment
-            if col_idx == 6:
-                cell.fill = yellow_fill
-
-    from openpyxl.utils import get_column_letter
+        c1.border = c2.border = c3.border = c4.border = thin_border
+        c5.border = c6.border = c7.border = c8.border = thin_border
+        c1.font = c2.font = c3.font = c4.font = data_font
+        c5.font = c6.font = c7.font = c8.font = data_font
+        c1.alignment = center_alignment
+        c6.alignment = center_alignment
+        c6.fill = yellow_fill
+        
+        current_row += 1
 
     widths = {1: 8, 2: 30, 3: 20, 4: 10, 5: 10, 6: 25, 7: 10, 8: 25}
     for col_idx, width in widths.items():
