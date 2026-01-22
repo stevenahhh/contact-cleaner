@@ -41,15 +41,15 @@ class FileListFrame(ttk.LabelFrame):
         self.listbox.place(x=0, y=0, relwidth=1.0, relheight=1.0)
         self.listbox.bind('<Configure>', lambda e: None)
         
-        # Add drag & drop hint overlay (only shown when empty and DND available)
         if HAS_DND:
-            self._hint_font = tkfont.Font(family="Malgun Gothic", size=10)
+            self._hint_font = tkfont.Font(family="Malgun Gothic", size=12)
+            list_bg = self.listbox.cget("bg")
             self.hint_label = tk.Label(
                 container,
                 text="파일을 여기에 드래그하세요\n또는 '파일 추가' 버튼 클릭",
                 font=self._hint_font,
                 fg="#999999",
-                bg=self.listbox.cget("bg"),
+                bg=list_bg,
                 justify=tk.CENTER
             )
             self.hint_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
