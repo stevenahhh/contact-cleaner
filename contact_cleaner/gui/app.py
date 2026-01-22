@@ -475,8 +475,9 @@ class ContactCleanerApp(BaseClass):
 
         result = []
         for key, items in merged.items():
-            checked_items = [item for item in items if item["checked"]]
-            result.extend(checked_items)
+            has_checked = any(item["checked"] for item in items)
+            if has_checked:
+                result.append(items[0])
 
         return result
 
