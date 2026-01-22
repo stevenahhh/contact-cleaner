@@ -582,103 +582,92 @@ class ContactCleanerApp(BaseClass):
             name = re.sub(r'[\d\-\+\(\)\s]+', '', name)
             return name
         
+        right_by_phone: dict[str, list[tuple[int, dict]]] = {}
+        for idx, item in enumerate(right_data):
+            phone = item["변환됨"]
+            if phone not in right_by_phone:
+                right_by_phone[phone] = []
+            right_by_phone[phone].append((idx, item))
+        
         result = []
         matched_right_indices = set()
 
-        for idx, left_item in enumerate(left_data):
+        for left_item in left_data:
             left_name = left_item["이름"].strip() if left_item["이름"] else ""
             left_phone = left_item["변환됨"]
             left_name_clean = clean_name(left_name)
 
+            candidates = right_by_phone.get(left_phone, [])
+            available = [(idx, item) for idx, item in candidates if idx not in matched_right_indices]
+            
+            if not available:
+                result.append({
+                    "이름": left_name,
+                    "원본 전화번호": "",
+                    "변환됨": left_phone,
+                    "검증": "X",
+                })
+                continue
+            
             name_match_found = False
-            phone_match_indices = []
-
-            for right_idx, right_item in enumerate(right_data):
-                if right_idx in matched_right_indices:
-                    continue
-                
+            phone_only_matches = []
+            
+            for right_idx, right_item in available:
                 right_name = right_item["이름"].strip() if right_item["이름"] else ""
-                right_phone = right_item["변환됨"]
-
-                if left_phone == right_phone:
-                    right_name_clean = clean_name(right_name)
-                    
-                    # If both have names, check name similarity
-                    if left_name_clean and right_name_clean:
-                        if (left_name_clean in right_name_clean or right_name_clean in left_name_clean):
-                            # Name + phone match
-                            result.append(
-                                {
-                                    "이름": right_name,
-                                    "원본 전화번호": "",
-                                    "변환됨": right_phone,
-                                    "검증": "O",
-                                }
-                            )
-                            matched_right_indices.add(right_idx)
-                            name_match_found = True
-                            break
-                        else:
-                            # Phone match but name different
-                            phone_match_indices.append(right_idx)
-                    else:
-                        # At least one has no name - use whichever name exists
-                        merged_name = left_name or right_name
-                        result.append(
-                            {
-                                "이름": merged_name,
-                                "원본 전화번호": "",
-                                "변환됨": right_phone,
-                                "검증": "O",
-                            }
-                        )
+                right_name_clean = clean_name(right_name)
+                
+                if left_name_clean and right_name_clean:
+                    if left_name_clean in right_name_clean or right_name_clean in left_name_clean:
+                        result.append({
+                            "이름": right_name,
+                            "원본 전화번호": "",
+                            "변환됨": left_phone,
+                            "검증": "O",
+                        })
                         matched_right_indices.add(right_idx)
                         name_match_found = True
                         break
-
+                    else:
+                        phone_only_matches.append((right_idx, right_item))
+                else:
+                    merged_name = left_name or right_name
+                    result.append({
+                        "이름": merged_name,
+                        "원본 전화번호": "",
+                        "변환됨": left_phone,
+                        "검증": "O",
+                    })
+                    matched_right_indices.add(right_idx)
+                    name_match_found = True
+                    break
+            
             if name_match_found:
                 continue
-
-            if phone_match_indices:
-                result.append(
-                    {
-                        "이름": left_name,
-                        "원본 전화번호": "",
-                        "변환됨": left_phone,
-                        "검증": "△",
-                    }
-                )
-                for right_idx in phone_match_indices:
-                    right_item = right_data[right_idx]
-                    result.append(
-                        {
-                            "이름": right_item["이름"].strip() if right_item["이름"] else "",
-                            "원본 전화번호": "",
-                            "변환됨": right_item["변환됨"],
-                            "검증": "△",
-                        }
-                    )
-                    matched_right_indices.add(right_idx)
-            else:
-                result.append(
-                    {
-                        "이름": left_name,
-                        "원본 전화번호": "",
-                        "변환됨": left_phone,
-                        "검증": "X",
-                    }
-                )
-
-        for right_idx, right_item in enumerate(right_data):
-            if right_idx not in matched_right_indices:
-                result.append(
-                    {
-                        "이름": right_item["이름"].strip(),
+            
+            if phone_only_matches:
+                result.append({
+                    "이름": left_name,
+                    "원본 전화번호": "",
+                    "변환됨": left_phone,
+                    "검증": "△",
+                })
+                for right_idx, right_item in phone_only_matches:
+                    result.append({
+                        "이름": right_item["이름"].strip() if right_item["이름"] else "",
                         "원본 전화번호": "",
                         "변환됨": right_item["변환됨"],
-                        "검증": "X",
-                    }
-                )
+                        "검증": "△",
+                    })
+                    matched_right_indices.add(right_idx)
+
+        for idx, right_item in enumerate(right_data):
+            if idx not in matched_right_indices:
+                result.append({
+                    "이름": right_item["이름"].strip() if right_item["이름"] else "",
+                    "원본 전화번호": "",
+                    "변환됨": right_item["변환됨"],
+                    "검증": "X",
+                })
 
         return result
 
