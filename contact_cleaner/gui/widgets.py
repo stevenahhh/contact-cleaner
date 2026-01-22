@@ -31,7 +31,7 @@ class FileListFrame(ttk.LabelFrame):
         self.listbox = tk.Listbox(
             container,
             selectmode=tk.EXTENDED,
-            height=6,
+            height=12,
             bd=0,
             highlightthickness=1,
             relief="flat",
@@ -154,7 +154,7 @@ class LogFrame(ttk.LabelFrame):
     def _setup_ui(self):
         self.text_area = tk.Text(
             self,
-            height=8,
+            height=2,
             font=self._log_font,
             state=tk.DISABLED,
             wrap=tk.WORD,
@@ -258,28 +258,29 @@ class ProgressFrame(ttk.Frame):
         self.status_label = ttk.Label(self, textvariable=self.status_var, anchor="w")
         self.status_label.pack(fill=tk.X, pady=(0, 5))
 
-        self.progress_var = tk.DoubleVar(value=0)
-        self.progressbar = ttk.Progressbar(
-            self, variable=self.progress_var, mode="determinate"
-        )
+        # Use indeterminate mode for animated progress bar
+        self.progressbar = ttk.Progressbar(self, mode="indeterminate")
         self.progressbar.pack(fill=tk.X)
-
-        self._small_font = tkfont.Font(family="Malgun Gothic", size=11)
-        self.count_label = ttk.Label(self, text="", anchor="e", font=self._small_font)
-        self.count_label.pack(fill=tk.X, pady=(5, 0))
+        
+        self._is_running = False
 
     def update_progress(self, current: int, total: int, filename: str):
-        percentage = (current / total) * 100
-        self.progress_var.set(percentage)
+        # Start animation if not already running
+        if not self._is_running:
+            self.progressbar.start(10)  # 10ms interval for smooth animation
+            self._is_running = True
         self.status_var.set(f"처리 중: {filename}")
-        self.count_label.configure(text=f"{int(percentage)}% ({current}/{total})")
 
     def reset(self):
-        self.progress_var.set(0)
+        # Stop animation and reset
+        if self._is_running:
+            self.progressbar.stop()
+            self._is_running = False
         self.status_var.set("대기 중")
-        self.count_label.configure(text="")
 
     def complete(self):
-        self.progress_var.set(100)
+        # Stop animation when complete
+        if self._is_running:
+            self.progressbar.stop()
+            self._is_running = False
         self.status_var.set("처리 완료")
-        self.count_label.configure(text="100% 완료")

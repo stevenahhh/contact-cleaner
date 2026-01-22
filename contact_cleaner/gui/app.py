@@ -50,9 +50,9 @@ class ContactCleanerApp(BaseClass):
         self.tk.call('tk', 'scaling', scale_factor * 1.25)
 
         self.title("주소록 정리 v1.3.0")
-        self.geometry("1150x950")
-        self.minsize(1150, 950)
-        self.maxsize(1150, 950)
+        self.geometry("1150x1150")
+        self.minsize(1150, 1150)
+        self.maxsize(1150, 1150)
         self.resizable(False, False)
         
         self._setup_ui()
@@ -79,7 +79,7 @@ class ContactCleanerApp(BaseClass):
         style.configure('Accent.TButton', font=('Malgun Gothic', 12))
         style.configure('TLabelframe.Label', font=('Malgun Gothic', 13, 'bold'))
         style.configure('TLabel', font=('Malgun Gothic', 12))
-        style.configure('TProgressbar', thickness=25)
+        style.configure('TProgressbar', thickness=35)
 
         self.notebook = ttk.Notebook(main_container)
         self.notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
