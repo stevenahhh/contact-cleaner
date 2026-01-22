@@ -217,7 +217,7 @@ class ContactCleanerApp(BaseClass):
             return
 
         self._lock_ui()
-        self.log_view.log("주소록 정리 작업을 시작합니다...", "INFO")
+        self.log_view.log("주소록 정리 작업을 시작합니다", "INFO")
 
         thread = threading.Thread(target=self._clean_thread, args=(files,), daemon=True)
         thread.start()
@@ -234,7 +234,7 @@ class ContactCleanerApp(BaseClass):
             return
 
         self._lock_ui()
-        self.log_view.log("데이터 대조 작업을 시작합니다...", "INFO")
+        self.log_view.log("데이터 대조 작업을 시작합니다", "INFO")
 
         thread = threading.Thread(
             target=self._compare_thread, args=(source_files, target_files), daemon=True
@@ -249,7 +249,7 @@ class ContactCleanerApp(BaseClass):
             return
 
         self._lock_ui()
-        self.log_view.log("병합 작업을 시작합니다...", "INFO")
+        self.log_view.log("병합 작업을 시작합니다.", "INFO")
 
         thread = threading.Thread(
             target=self._merge_thread, args=(merge_files,), daemon=True
@@ -274,7 +274,7 @@ class ContactCleanerApp(BaseClass):
             save_styled_excel,
         )
         try:
-            self.after(0, self.log_view.log, f"{len(files)}개 파일 변환 시작...", "INFO")
+            self.after(0, self.log_view.log, f"{len(files)}개 파일 변환 시작", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
             all_transformed = []
@@ -314,7 +314,7 @@ class ContactCleanerApp(BaseClass):
             save_styled_excel,
         )
         try:
-            self.after(0, self.log_view.log, "대조 대상 파일을 변환 중입니다...", "INFO")
+            self.after(0, self.log_view.log, "대조 대상 파일을 변환 중입니다", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
             reference_transformed = []
@@ -363,7 +363,7 @@ class ContactCleanerApp(BaseClass):
         from contact_cleaner.utils.file_utils import create_output_structure
         import openpyxl
         try:
-            self.after(0, self.log_view.log, f"{len(merge_files)}개 파일 로드 중...", "INFO")
+            self.after(0, self.log_view.log, f"{len(merge_files)}개 파일 로드 중", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 로드 중")
 
             all_data = []
@@ -476,11 +476,7 @@ class ContactCleanerApp(BaseClass):
         result = []
         for key, items in merged.items():
             checked_items = [item for item in items if item["checked"]]
-
-            if checked_items:
-                result.extend(checked_items)
-            else:
-                result.append(items[0])
+            result.extend(checked_items)
 
         return result
 
