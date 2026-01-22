@@ -199,6 +199,18 @@ class ContactCleanerApp(BaseClass):
         self.legend = StatusLegend(compare_tab)
         self.legend.pack(fill=tk.X, pady=(0, 10))
 
+        # Options for comparison
+        options_frame = ttk.Frame(compare_tab)
+        options_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        self.hide_x_var = tk.BooleanVar(value=False)
+        self.hide_x_cb = ttk.Checkbutton(
+            options_frame, 
+            text="대조 결과에서 'X(매칭 없음)' 항목 제외하고 저장", 
+            variable=self.hide_x_var
+        )
+        self.hide_x_cb.pack(side=tk.LEFT)
+
         self.compare_btn = ttk.Button(
             compare_tab,
             text="▶ 데이터 대조 시작",
@@ -502,6 +514,8 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.log_view.log, "대조 대상 파일을 변환 중입니다", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
+            hide_x = self.hide_x_var.get()
+
             reference_transformed = []
             for file_path in target_files:
                 processor = ContactProcessor(str(file_path))
@@ -524,6 +538,11 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.progress.update_progress, 0, 100, "대조 중")
             merged_data = self._merge_and_deduplicate(
                 all_source, reference_transformed)
+
+            if hide_x:
+                original_count = len(merged_data)
+                merged_data = [row for row in merged_data if row.get("검증") != "X"]
+                self.after(0, self.log_view.log, f"'X' 항목 {original_count - len(merged_data)}개를 제외했습니다.", "INFO")
 
             def on_save_progress(current, total):
                 pct = int((current / total) * 100) if total > 0 else 0
