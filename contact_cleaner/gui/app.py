@@ -158,7 +158,7 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='파일명을 "{이름}_주소록.xlsx" 형식으로 수정하세요!\n예: 홍길동_주소록.xlsx',
+            text='파일명을 "{주소록 사용자 이름}_주소록.xlsx" 형식으로 수정하세요!\n예: 홍길동_주소록.xlsx',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
@@ -527,7 +527,7 @@ class ContactCleanerApp(BaseClass):
             cell.fill = gray_fill
 
         for idx, item in enumerate(data, start=1):
-            current_row = ws.max_row + 1
+            current_row = idx + 2
             ws.cell(row=current_row, column=1, value=idx)
             ws.cell(row=current_row, column=2, value=item.get("주소록 주인", ""))
             ws.cell(row=current_row, column=3, value=item.get("이름", "") or " ")
