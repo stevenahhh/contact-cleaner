@@ -230,9 +230,28 @@ class ContactProcessor:
         rows = []
         with open(self.file_path, "r", encoding=encoding, newline="") as f:
             reader = csv.DictReader(f)
+            if reader.fieldnames:
+                cleaned_fieldnames = [self._clean_header(h) for h in reader.fieldnames]
+            else:
+                cleaned_fieldnames = []
+            
             for row in reader:
-                rows.append(row)
+                cleaned_row = {}
+                for original_header, cleaned_header in zip(reader.fieldnames or [], cleaned_fieldnames):
+                    cleaned_row[cleaned_header] = row.get(original_header, "")
+                rows.append(cleaned_row)
         return rows
+    
+    def _clean_header(self, header: str) -> str:
+        if not header:
+            return header
+        cleaned = header.strip()
+        cleaned = cleaned.lstrip('\ufeff')
+        if cleaned.startswith('"') and cleaned.endswith('"'):
+            cleaned = cleaned[1:-1]
+        if cleaned.startswith("'") and cleaned.endswith("'"):
+            cleaned = cleaned[1:-1]
+        return cleaned.strip()
 
     def _determine_status(
         self, original_phone: str, normalized_phone: Optional[str]
