@@ -55,6 +55,18 @@ class FileListFrame(ttk.LabelFrame):
             self.hint_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
             # Show hint immediately since list is empty on init
             self.hint_label.lift()
+            # Make hint label transparent to mouse events - don't block drag/drop
+            self.hint_label.bind('<Button-1>', lambda e: self.listbox.focus_set())
+            self.hint_label.config(cursor="arrow")
+            # Forward drag events from hint_label to listbox
+            if HAS_DND:
+                try:
+                    self.hint_label.drop_target_register(DND_FILES)
+                    self.hint_label.dnd_bind('<<Drop>>', self._on_drop)
+                    self.hint_label.dnd_bind('<<DragEnter>>', self._on_drag_enter)
+                    self.hint_label.dnd_bind('<<DragLeave>>', self._on_drag_leave)
+                except Exception:
+                    pass
         
         self._setup_drag_drop()
 
