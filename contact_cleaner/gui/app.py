@@ -51,19 +51,17 @@ class ContactCleanerApp(BaseClass):
         self.tk.call('tk', 'scaling', scale_factor * 1.125)
 
         # Calculate window size based on screen resolution
-        screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         
-        # For 4K (3840x2160): use ~50% of screen
-        # For 1080p (1920x1080): use ~60% of screen  
+        # Base size for 1080p, scale up for higher resolutions
         if screen_height >= 2160:
-            win_width = 1400
-            win_height = 1200
-        elif screen_height >= 1440:
             win_width = 1200
             win_height = 1000
+        elif screen_height >= 1440:
+            win_width = 1150
+            win_height = 950
         else:
-            win_width = 1100
+            win_width = 1150
             win_height = 950
 
         self.title("주소록 정리 v1.3.0")
@@ -104,9 +102,10 @@ class ContactCleanerApp(BaseClass):
         style.configure('TProgressbar', thickness=100)
 
         # Calculate notebook height based on window height
-        notebook_height = int(self._win_height * 0.55)
+        self._notebook_height = int(self._win_height * 0.55)
+        self._main_container = main_container
 
-        self.notebook = ttk.Notebook(main_container, height=notebook_height)
+        self.notebook = ttk.Notebook(main_container, height=self._notebook_height)
         self.notebook.pack(fill=tk.X, pady=(0, 15))
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
@@ -134,11 +133,19 @@ class ContactCleanerApp(BaseClass):
         v_label.place(relx=1.0, rely=1.0, x=-10, y=-5, anchor="se")
 
     def _on_tab_changed(self, event):
-        """Hide log/progress when on help tab, show otherwise"""
+        """Hide log/progress when on help tab and expand notebook to fill space"""
         current_tab = self.notebook.index(self.notebook.select())
         if current_tab == 3:  # Help tab (0-indexed)
             self.bottom_section.pack_forget()
+            # Expand notebook to fill entire space
+            self.notebook.pack_forget()
+            self.notebook.configure(height=0)  # Remove fixed height
+            self.notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         else:
+            # Restore normal layout
+            self.notebook.pack_forget()
+            self.notebook.configure(height=self._notebook_height)
+            self.notebook.pack(fill=tk.X, pady=(0, 15))
             self.bottom_section.pack(fill=tk.BOTH, expand=True)
 
     def _setup_clean_tab(self):
@@ -455,9 +462,8 @@ class ContactCleanerApp(BaseClass):
                         )
 
             self.after(0, self.progress.update_progress, 0, 100, "중복 제거 중")
-            merged_data = self._merge_and_deduplicate(all_transformed, [])
-            for item in merged_data:
-                item["검증"] = ""
+            # Simple dedup for clean - no comparison logic needed
+            merged_data = self._simple_deduplicate(all_transformed)
 
             def on_save_progress(current, total):
                 pct = int((current / total) * 100) if total > 0 else 0
@@ -750,6 +756,23 @@ class ContactCleanerApp(BaseClass):
                 if row["변환됨"]:
                     transformed.append({"이름": row["이름"], "변환됨": row["변환됨"]})
         return transformed
+
+    def _simple_deduplicate(self, data: list[dict]) -> list[dict]:
+        """Simple deduplication by (name, phone) - for clean function only"""
+        seen = set()
+        result = []
+        for item in data:
+            name = (item.get("이름") or "").strip()
+            phone = item.get("변환됨", "")
+            key = (name, phone)
+            if key not in seen:
+                seen.add(key)
+                result.append({
+                    "이름": name,
+                    "변환됨": phone,
+                    "검증": "",  # Empty for clean results
+                })
+        return result
 
     def _merge_and_deduplicate(
         self, left_data: list[dict], right_data: list[dict]

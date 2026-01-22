@@ -235,31 +235,31 @@ class LogFrame(ttk.LabelFrame):
 
 class StatusLegend(ttk.LabelFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, text="상태 설명", padding=12, **kwargs)
+        super().__init__(parent, text="상태 설명", padding=8, **kwargs)
 
         items = [
-            ("O", "이름 + 번호 일치"),
+            ("O", "이름+번호 일치"),
             ("△(번호)", "번호만 일치"),
             ("△(이름)", "이름만 일치"),
             ("X", "매칭 없음")
         ]
 
         self._legend_sym_font = tkfont.Font(
-            family="Malgun Gothic", size=11, weight="bold"
+            family="Malgun Gothic", size=10, weight="bold"
+        )
+        self._legend_desc_font = tkfont.Font(
+            family="Malgun Gothic", size=10
         )
 
-        for symbol, desc in items:
-            row = ttk.Frame(self)
-            row.pack(fill=tk.X, pady=3)
-
+        # Horizontal layout
+        for i, (symbol, desc) in enumerate(items):
             lbl_sym = ttk.Label(
-                row, text=symbol, width=8, anchor="center", font=self._legend_sym_font
+                self, text=symbol, font=self._legend_sym_font
             )
+            lbl_sym.pack(side=tk.LEFT, padx=(0, 2))
 
-            lbl_sym.pack(side=tk.LEFT)
-
-            lbl_desc = ttk.Label(row, text=f":  {desc}")
-            lbl_desc.pack(side=tk.LEFT)
+            lbl_desc = ttk.Label(self, text=f": {desc}", font=self._legend_desc_font)
+            lbl_desc.pack(side=tk.LEFT, padx=(0, 15) if i < len(items) - 1 else (0, 0))
 
 
 class ProgressFrame(ttk.Frame):
