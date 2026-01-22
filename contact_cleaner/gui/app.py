@@ -275,31 +275,25 @@ class ContactCleanerApp(BaseClass):
         )
         try:
             self.after(0, self.log_view.log, f"{len(files)}개 파일 변환 시작...", "INFO")
+            self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
             all_transformed = []
-            total_files = len(files)
-            
-            for file_idx, file_path in enumerate(files):
-                def on_progress(current, total):
-                    base_pct = int((file_idx / total_files) * 50)
-                    file_pct = int((current / total) * (50 / total_files)) if total > 0 else 0
-                    self.after(0, self.progress.update_progress, base_pct + file_pct, 100, "파일 읽는 중")
-                
+            for file_path in files:
                 processor = ContactProcessor(str(file_path))
-                result = processor.process(progress_callback=on_progress)
+                result = processor.process()
                 for row in result.comparison_data:
                     if row["변환됨"]:
                         all_transformed.append(
                             {"이름": row["이름"], "변환됨": row["변환됨"]}
                         )
 
-            self.after(0, self.progress.update_progress, 50, 100, "중복 제거 중")
+            self.after(0, self.progress.update_progress, 0, 100, "중복 제거 중")
             merged_data = self._merge_and_deduplicate(all_transformed, [])
             for item in merged_data:
                 item["검증"] = ""
 
             def on_save_progress(current, total):
-                pct = 50 + int((current / total) * 50) if total > 0 else 50
+                pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
             
             output_path = create_output_structure("병합", "변환")
@@ -321,42 +315,30 @@ class ContactCleanerApp(BaseClass):
         )
         try:
             self.after(0, self.log_view.log, "대조 대상 파일을 변환 중입니다...", "INFO")
-            
-            total_files = len(target_files) + len(source_files)
-            processed = 0
-
-            def on_target_progress(current, total):
-                pct = int((processed / total_files) * 30) + int((current / total) * (30 / len(target_files))) if total > 0 else 0
-                self.after(0, self.progress.update_progress, pct, 100, "대조 대상 읽는 중")
+            self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
             reference_transformed = []
             for file_path in target_files:
                 processor = ContactProcessor(str(file_path))
-                result = processor.process(progress_callback=on_target_progress)
+                result = processor.process()
                 for row in result.transformed_data:
                     reference_transformed.append({"이름": row["이름"], "변환됨": row["변환됨"]})
-                processed += 1
             
             self.after(0, self.log_view.log, f"대조 대상 변환 완료 ({len(reference_transformed)}개)", "INFO")
 
             all_source = []
             for file_path in source_files:
-                def on_source_progress(current, total):
-                    pct = 30 + int((processed / total_files) * 30) + int((current / total) * (30 / len(source_files))) if total > 0 else 30
-                    self.after(0, self.progress.update_progress, pct, 100, "원본 파일 읽는 중")
-                
                 processor = ContactProcessor(str(file_path))
-                result = processor.process(progress_callback=on_source_progress)
+                result = processor.process()
                 for row in result.comparison_data:
                     if row["변환됨"]:
                         all_source.append({"이름": row["이름"], "변환됨": row["변환됨"]})
-                processed += 1
 
-            self.after(0, self.progress.update_progress, 60, 100, "대조 중")
+            self.after(0, self.progress.update_progress, 0, 100, "대조 중")
             merged_data = self._merge_and_deduplicate(all_source, reference_transformed)
 
             def on_save_progress(current, total):
-                pct = 60 + int((current / total) * 40) if total > 0 else 60
+                pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
 
             output_path = create_output_structure("병합", "대조")
@@ -382,15 +364,12 @@ class ContactCleanerApp(BaseClass):
         import openpyxl
         try:
             self.after(0, self.log_view.log, f"{len(merge_files)}개 파일 로드 중...", "INFO")
+            self.after(0, self.progress.update_progress, 0, 100, "파일 로드 중")
 
             all_data = []
             invalid_files = []
-            total_files = len(merge_files)
 
-            for file_idx, file_path in enumerate(merge_files):
-                pct = int((file_idx / total_files) * 50)
-                self.after(0, self.progress.update_progress, pct, 100, "파일 로드 중")
-                
+            for file_path in merge_files:
                 try:
                     owner_name = self._extract_owner_name(file_path)
                     if not owner_name:
@@ -435,12 +414,12 @@ class ContactCleanerApp(BaseClass):
                 return
 
             self.after(0, self.log_view.log, f"총 {len(all_data)}개 항목 로드 완료", "INFO")
-            self.after(0, self.progress.update_progress, 50, 100, "중복 제거 중")
+            self.after(0, self.progress.update_progress, 0, 100, "중복 제거 중")
 
             merged_data = self._merge_with_check(all_data)
 
             self.after(0, self.log_view.log, f"중복 제거 후 {len(merged_data)}개 항목", "INFO")
-            self.after(0, self.progress.update_progress, 70, 100, "파일 저장 중")
+            self.after(0, self.progress.update_progress, 0, 100, "파일 저장 중")
 
             output_path = create_output_structure("병합", "최종병합")
             self._save_merged_excel(merged_data, output_path)
