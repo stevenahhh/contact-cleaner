@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Callable
 
 from .normalizer import normalize_phone_number
 from .detector import ColumnDetector
@@ -16,12 +16,15 @@ class ProcessResult(NamedTuple):
     encoding: str
 
 
+ProgressCallback = Optional[Callable[[int, int], None]]
+
+
 class ContactProcessor:
     def __init__(self, file_path: str):
         self.file_path = Path(file_path)
         self.detector: Optional[ColumnDetector] = None
 
-    def process(self) -> ProcessResult:
+    def process(self, progress_callback: ProgressCallback = None) -> ProcessResult:
         self.detector = ColumnDetector(str(self.file_path))
 
         name_columns = self.detector.detect_name_columns()
@@ -34,8 +37,12 @@ class ContactProcessor:
         stats = {"O": 0, "X": 0, "△": 0}
 
         rows = self._read_rows(encoding)
+        total_rows = len(rows)
 
-        for row in rows:
+        for idx, row in enumerate(rows):
+            if progress_callback and idx % 100 == 0:
+                progress_callback(idx, total_rows)
+            
             name = self._extract_name_from_row(row, name_columns)
 
             all_phones = self._find_all_valid_phones_in_row(row)
@@ -80,6 +87,9 @@ class ContactProcessor:
                             "검증": "",
                         }
                     )
+        
+        if progress_callback:
+            progress_callback(total_rows, total_rows)
 
         return ProcessResult(
             original_data=original_data,

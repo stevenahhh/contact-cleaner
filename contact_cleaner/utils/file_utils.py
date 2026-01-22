@@ -61,7 +61,7 @@ def save_comparison_csv(data: list[dict], path: Path) -> None:
         writer.writerows(data)
 
 
-def save_styled_excel(data: list[dict], path: Path) -> None:
+def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> None:
     if not data:
         return
 
@@ -107,8 +107,12 @@ def save_styled_excel(data: list[dict], path: Path) -> None:
         cell.border = thin_border
         cell.fill = gray_fill
 
+    total_rows = len(data)
     current_row = 3
     for idx, item in enumerate(data, start=1):
+        if progress_callback and idx % 500 == 0:
+            progress_callback(idx, total_rows)
+        
         name_value = item.get("이름", "") or " "
         phone_value = item.get("변환됨") or item.get("원본 전화번호") or " "
         verification = item.get("검증", "")
@@ -131,6 +135,9 @@ def save_styled_excel(data: list[dict], path: Path) -> None:
         c6.fill = yellow_fill
         
         current_row += 1
+    
+    if progress_callback:
+        progress_callback(total_rows, total_rows)
 
     widths = {1: 8, 2: 30, 3: 20, 4: 10, 5: 10, 6: 25, 7: 10, 8: 25}
     for col_idx, width in widths.items():

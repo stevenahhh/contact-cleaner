@@ -258,29 +258,22 @@ class ProgressFrame(ttk.Frame):
         self.status_label = ttk.Label(self, textvariable=self.status_var, anchor="w")
         self.status_label.pack(fill=tk.X, pady=(0, 5))
 
-        # Use indeterminate mode for animated progress bar
-        self.progressbar = ttk.Progressbar(self, mode="indeterminate")
+        self.progressbar = ttk.Progressbar(self, mode="determinate", maximum=100)
         self.progressbar.pack(fill=tk.X)
-        
-        self._is_running = False
 
-    def update_progress(self, current: int, total: int, filename: str):
-        # Start animation if not already running
-        if not self._is_running:
-            self.progressbar.start(10)  # 10ms interval for smooth animation
-            self._is_running = True
-        self.status_var.set(f"처리 중: {filename}")
+    def update_progress(self, current: int, total: int, status: str = "처리 중"):
+        if total > 0:
+            percent = int((current / total) * 100)
+            self.progressbar["value"] = percent
+            self.status_var.set(f"{status}: {current:,}/{total:,} ({percent}%)")
+        else:
+            self.progressbar["value"] = 0
+            self.status_var.set(status)
 
     def reset(self):
-        # Stop animation and reset
-        if self._is_running:
-            self.progressbar.stop()
-            self._is_running = False
+        self.progressbar["value"] = 0
         self.status_var.set("대기 중")
 
     def complete(self):
-        # Stop animation when complete
-        if self._is_running:
-            self.progressbar.stop()
-            self._is_running = False
+        self.progressbar["value"] = 100
         self.status_var.set("처리 완료")
