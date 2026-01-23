@@ -159,7 +159,7 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='원본 파일에 "이름", "휴대폰번호" 또는 "성", "이름", "Mobile Phone" 등의\n컬럼 헤더가 포함되어 있어야 합니다.',
+            text='원본 파일에 "이름", "휴대폰번호" 또는 "성", "이름", "Mobile Phone" 등의\n컬럼 헤더가 포함되어 있어야 합니다.\n※ 파일명 형식: {소유자명}_주소록.csv 또는 {소유자명}_주소록.xlsx (정리 결과 파일명에 소유자명이 포함됩니다)',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
@@ -485,6 +485,10 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.log_view.log, f"{len(files)}개 파일 변환 시작", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
+            owner_name = ""
+            if len(files) == 1:
+                owner_name = self._extract_owner_name(files[0])
+
             all_transformed = []
             for file_path in files:
                 processor = ContactProcessor(str(file_path))
@@ -496,14 +500,13 @@ class ContactCleanerApp(BaseClass):
                         )
 
             self.after(0, self.progress.update_progress, 0, 100, "중복 제거 중")
-            # Simple dedup for clean - no comparison logic needed
             merged_data = self._simple_deduplicate(all_transformed)
 
             def on_save_progress(current, total):
                 pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
 
-            output_path = create_output_structure("정리")
+            output_path = create_output_structure("정리", owner_name=owner_name)
             save_styled_excel(merged_data, output_path,
                               progress_callback=on_save_progress)
 
@@ -527,6 +530,10 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
             hide_x = self.hide_x_var.get()
+
+            owner_name = ""
+            if len(source_files) == 1:
+                owner_name = self._extract_owner_name(source_files[0])
 
             reference_transformed = []
             for file_path in target_files:
@@ -560,7 +567,7 @@ class ContactCleanerApp(BaseClass):
                 pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
 
-            output_path = create_output_structure("대조")
+            output_path = create_output_structure("대조", owner_name=owner_name)
             save_styled_excel(merged_data, output_path,
                               progress_callback=on_save_progress)
 

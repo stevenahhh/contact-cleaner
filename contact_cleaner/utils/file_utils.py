@@ -26,21 +26,28 @@ def get_work_folder() -> Path:
     return work_folder
 
 
-def create_output_structure(filename: str, output_type: str = "") -> Path:
+def create_output_structure(filename: str, output_type: str = "", owner_name: str = "") -> Path:
     work_folder = get_work_folder()
     timestamp = datetime.now().strftime("%y%m%d-%H%M")
     stem = Path(filename).stem
 
-    # Only add '1_' prefix for clean (정리) output
     if stem == "정리":
         prefix = "1_"
+        if owner_name:
+            output_filename = f"{prefix}{stem}_{owner_name}_{timestamp}.xlsx"
+        else:
+            output_filename = f"{prefix}{stem}결과_{timestamp}.xlsx"
+    elif stem == "대조":
+        if owner_name:
+            output_filename = f"{stem}_{owner_name}_{timestamp}.xlsx"
+        else:
+            output_filename = f"{stem}결과_{timestamp}.xlsx"
     else:
-        prefix = ""
-
-    if output_type:
-        output_filename = f"{prefix}{stem}_{output_type}결과_{timestamp}.xlsx"
-    else:
-        output_filename = f"{prefix}{stem}결과_{timestamp}.xlsx"
+        if output_type:
+            output_filename = f"{stem}_{output_type}결과_{timestamp}.xlsx"
+        else:
+            output_filename = f"{stem}결과_{timestamp}.xlsx"
+    
     return work_folder / output_filename
 
 
