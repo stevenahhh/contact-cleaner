@@ -32,9 +32,9 @@ def create_output_structure(filename: str, output_type: str = "") -> Path:
     stem = Path(filename).stem
 
     if output_type:
-        output_filename = f"{stem}_{output_type}결과_{timestamp}.xlsx"
+        output_filename = f"1_{stem}_{output_type}결과_{timestamp}.xlsx"
     else:
-        output_filename = f"{stem}결과_{timestamp}.xlsx"
+        output_filename = f"1_{stem}결과_{timestamp}.xlsx"
     return work_folder / output_filename
 
 
