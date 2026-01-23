@@ -503,6 +503,17 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
             owner_name = self._extract_owner_name(files[0]) if files else ""
+            
+            if not owner_name:
+                error_msg = (
+                    "파일명에서 소유자명을 찾을 수 없습니다.\n\n"
+                    "파일명 형식: {소유자명}_주소록\n"
+                    "예시: 홍길동_주소록.csv, 김철수_주소록(구글).xlsx\n\n"
+                    "※ 원본 주소록 파일을 사용하세요."
+                )
+                self.after(0, self.log_view.log, error_msg, "ERROR")
+                self.after(0, self._unlock_ui)
+                return
 
             all_transformed = []
             for file_path in files:
@@ -552,6 +563,17 @@ class ContactCleanerApp(BaseClass):
                 owner_name = self._extract_owner_name(source_files[0])
             if not owner_name and target_files:
                 owner_name = self._extract_owner_name(target_files[0])
+            
+            if not owner_name:
+                error_msg = (
+                    "파일명에서 소유자명을 찾을 수 없습니다.\n\n"
+                    "파일명 형식: {소유자명}_주소록\n"
+                    "예시: 홍길동_주소록.csv, 김철수_주소록(구글).xlsx\n\n"
+                    "※ 정리/대조 결과 파일이 아닌 원본 주소록 파일을 사용하세요."
+                )
+                self.after(0, self.log_view.log, error_msg, "ERROR")
+                self.after(0, self._unlock_ui)
+                return
 
             reference_transformed = []
             for file_path in target_files:
