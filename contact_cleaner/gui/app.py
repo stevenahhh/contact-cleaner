@@ -159,12 +159,14 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='원본 파일에 "이름", "휴대폰번호" 또는 "성", "이름", "Mobile Phone" 등의\n컬럼 헤더가 포함되어 있어야 합니다.\n※ 파일명 형식: {소유자명}_주소록.csv 또는 {소유자명}_주소록.xlsx\n※ 한 번에 한 소유자의 주소록(들)만 정리하세요 (결과 파일명에 소유자명이 포함됩니다)',
+            text='파일명 형식: {소유자명}_주소록\n예시: 홍길동_주소록(구글).csv 또는 홍길동_주소록(1).csv\n※ 한 번에 한 소유자의 주소록(들)만 정리하세요 (결과 파일명에 소유자명이 포함됩니다)',
             foreground="#FF6600",
             font=self.small_font,
-            justify=tk.LEFT
+            justify=tk.LEFT,
+            cursor="hand2"
         )
         info_text.pack(anchor=tk.W)
+        info_text.bind("<Button-1>", lambda e: self._show_filename_help())
 
         self.source_list = FileListFrame(
             clean_tab, title="정리할 원본 파일", on_add=self.add_source_files
@@ -189,12 +191,14 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='※ 파일명 형식: {소유자명}_주소록\n※ 한 번에 한 소유자의 주소록(들)만 대조하세요 (결과 파일명에 소유자명이 포함됩니다)',
+            text='파일명 형식: {소유자명}_주소록\n예시: 홍길동_주소록(구글).csv 또는 홍길동_주소록(1).csv\n※ 한 번에 한 소유자의 주소록(들)만 대조하세요 (결과 파일명에 소유자명이 포함됩니다)',
             foreground="#FF6600",
             font=self.small_font,
-            justify=tk.LEFT
+            justify=tk.LEFT,
+            cursor="hand2"
         )
         info_text.pack(anchor=tk.W)
+        info_text.bind("<Button-1>", lambda e: self._show_filename_help())
 
         lists_container = ttk.Frame(compare_tab)
         lists_container.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
@@ -245,7 +249,7 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='파일명을 "{주소록 소유자명}_주소록.xlsx" 형식으로 수정하세요!\n예: 홍길동_주소록.xlsx',
+            text='파일명을 "정리_{소유자명}_" 또는 "대조_{소유자명}_" 형식으로 수정하세요!\n예: 대조_홍길동_260123-1234.xlsx',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
@@ -678,7 +682,9 @@ class ContactCleanerApp(BaseClass):
     def _extract_owner_name(self, file_path: str) -> str:
         import re
         filename = Path(file_path).stem
-        match = re.search(r'([^_\s]+)[_\s]*주소록', filename)
+        # Match pattern: {owner_name}_주소록 (with optional suffix after 주소록)
+        # Examples: 홍길동_주소록, 홍길동_주소록(구글), 홍길동_주소록(1)
+        match = re.search(r'([^_\s]+)_주소록', filename)
         if match:
             return match.group(1)
         return ""
@@ -1052,6 +1058,33 @@ class ContactCleanerApp(BaseClass):
             )
 
         return merged
+
+    def _show_filename_help(self):
+        help_text = """📋 파일명 형식 가이드
+
+'{소유자명}_주소록' 포맷은 반드시 맞춰야 합니다.
+
+✅ 올바른 예시:
+  • 홍길동_주소록.csv
+  • 홍길동_주소록(구글).csv
+  • 홍길동_주소록(1).xlsx
+  • 홍길동_주소록_백업.csv
+
+❌ 잘못된 예시:
+  • 홍길동주소록.csv (언더스코어 없음)
+  • 주소록_홍길동.csv (순서 바뀜)
+  • 홍길동.csv ("_주소록" 없음)
+
+📌 규칙:
+  • {소유자명}_주소록 형식을 반드시 포함
+  • _주소록 뒤에 추가 글자 작성 가능
+  • 확장자는 .csv 또는 .xlsx
+
+💡 결과 파일:
+  • 정리: 1_정리_홍길동_260123-1234.xlsx
+  • 대조: 대조_홍길동_260123-1234.xlsx
+"""
+        messagebox.showinfo("파일명 형식 안내", help_text)
 
     def _on_complete(self):
         from contact_cleaner.utils.file_utils import get_work_folder, open_folder_in_explorer
