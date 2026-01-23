@@ -33,15 +33,9 @@ def create_output_structure(filename: str, output_type: str = "", owner_name: st
 
     if stem == "정리":
         prefix = "1_"
-        if owner_name:
-            output_filename = f"{prefix}{stem}_{owner_name}_{timestamp}.xlsx"
-        else:
-            output_filename = f"{prefix}{stem}결과_{timestamp}.xlsx"
+        output_filename = f"{prefix}{stem}_{owner_name}_{timestamp}.xlsx" if owner_name else f"{prefix}{stem}결과_{timestamp}.xlsx"
     elif stem == "대조":
-        if owner_name:
-            output_filename = f"{stem}_{owner_name}_{timestamp}.xlsx"
-        else:
-            output_filename = f"{stem}결과_{timestamp}.xlsx"
+        output_filename = f"{stem}_{owner_name}_{timestamp}.xlsx" if owner_name else f"{stem}결과_{timestamp}.xlsx"
     else:
         if output_type:
             output_filename = f"{stem}_{output_type}결과_{timestamp}.xlsx"

@@ -159,7 +159,7 @@ class ContactCleanerApp(BaseClass):
 
         info_text = ttk.Label(
             info_frame,
-            text='원본 파일에 "이름", "휴대폰번호" 또는 "성", "이름", "Mobile Phone" 등의\n컬럼 헤더가 포함되어 있어야 합니다.\n※ 파일명 형식: {소유자명}_주소록.csv 또는 {소유자명}_주소록.xlsx (정리 결과 파일명에 소유자명이 포함됩니다)',
+            text='원본 파일에 "이름", "휴대폰번호" 또는 "성", "이름", "Mobile Phone" 등의\n컬럼 헤더가 포함되어 있어야 합니다.\n※ 파일명 형식: {소유자명}_주소록.csv 또는 {소유자명}_주소록.xlsx\n※ 한 번에 한 소유자의 주소록(들)만 정리하세요 (결과 파일명에 소유자명이 포함됩니다)',
             foreground="#FF6600",
             font=self.small_font,
             justify=tk.LEFT
@@ -182,6 +182,19 @@ class ContactCleanerApp(BaseClass):
     def _setup_compare_tab(self):
         compare_tab = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(compare_tab, text="Step 2. 대조")
+
+        # Warning notice
+        info_frame = ttk.Frame(compare_tab)
+        info_frame.pack(fill=tk.X, pady=(0, 10))
+
+        info_text = ttk.Label(
+            info_frame,
+            text='※ 파일명 형식: {소유자명}_주소록\n※ 한 번에 한 소유자의 주소록(들)만 대조하세요 (결과 파일명에 소유자명이 포함됩니다)',
+            foreground="#FF6600",
+            font=self.small_font,
+            justify=tk.LEFT
+        )
+        info_text.pack(anchor=tk.W)
 
         lists_container = ttk.Frame(compare_tab)
         lists_container.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
@@ -485,9 +498,7 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.log_view.log, f"{len(files)}개 파일 변환 시작", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 읽는 중")
 
-            owner_name = ""
-            if len(files) == 1:
-                owner_name = self._extract_owner_name(files[0])
+            owner_name = self._extract_owner_name(files[0]) if files else ""
 
             all_transformed = []
             for file_path in files:
@@ -531,9 +542,7 @@ class ContactCleanerApp(BaseClass):
 
             hide_x = self.hide_x_var.get()
 
-            owner_name = ""
-            if len(source_files) == 1:
-                owner_name = self._extract_owner_name(source_files[0])
+            owner_name = self._extract_owner_name(source_files[0]) if source_files else ""
 
             reference_transformed = []
             for file_path in target_files:
