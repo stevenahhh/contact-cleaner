@@ -546,7 +546,12 @@ class ContactCleanerApp(BaseClass):
 
             hide_x = self.hide_x_var.get()
 
-            owner_name = self._extract_owner_name(source_files[0]) if source_files else ""
+            # Try to extract owner_name from source files first, then target files
+            owner_name = ""
+            if source_files:
+                owner_name = self._extract_owner_name(source_files[0])
+            if not owner_name and target_files:
+                owner_name = self._extract_owner_name(target_files[0])
 
             reference_transformed = []
             for file_path in target_files:
