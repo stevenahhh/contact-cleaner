@@ -69,7 +69,10 @@ class ContactCleanerApp(BaseClass):
         self.minsize(1000, 850)
         self.resizable(True, True)
         
-        # Store dimensions for layout calculations
+        icon_path = Path(__file__).parent.parent / "icon.ico"
+        if icon_path.exists():
+            self.iconbitmap(str(icon_path))
+        
         self._win_height = win_height
 
         self._setup_ui()
