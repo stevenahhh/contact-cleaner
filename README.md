@@ -1,6 +1,6 @@
 # 주소록 정리 v1.3.0
 
-한국 휴대폰 번호(010) 정리 및 비교 전문 데스크톱 애플리케이션
+한국 휴대폰 번호(010) 정리 및 비교 데스크톱 어플리케이션
 
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
