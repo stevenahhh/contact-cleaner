@@ -643,7 +643,7 @@ class ContactCleanerApp(BaseClass):
                        f"중복 제거 후 {len(merged_data)}개 항목", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 저장 중")
 
-            output_path = create_output_structure("최종병합")
+            output_path = create_output_structure("병합")
             self._save_merged_excel(merged_data, output_path)
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")

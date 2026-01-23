@@ -31,10 +31,16 @@ def create_output_structure(filename: str, output_type: str = "") -> Path:
     timestamp = datetime.now().strftime("%y%m%d-%H%M")
     stem = Path(filename).stem
 
-    if output_type:
-        output_filename = f"1_{stem}_{output_type}결과_{timestamp}.xlsx"
+    # Only add '1_' prefix for clean (정리) output
+    if stem == "정리":
+        prefix = "1_"
     else:
-        output_filename = f"1_{stem}결과_{timestamp}.xlsx"
+        prefix = ""
+
+    if output_type:
+        output_filename = f"{prefix}{stem}_{output_type}결과_{timestamp}.xlsx"
+    else:
+        output_filename = f"{prefix}{stem}결과_{timestamp}.xlsx"
     return work_folder / output_filename
 
 
