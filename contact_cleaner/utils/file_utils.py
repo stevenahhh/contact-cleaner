@@ -26,12 +26,15 @@ def get_work_folder() -> Path:
     return work_folder
 
 
-def create_output_structure(filename: str, output_type: str = "변환") -> Path:
+def create_output_structure(filename: str, output_type: str = "") -> Path:
     work_folder = get_work_folder()
     timestamp = datetime.now().strftime("%y%m%d-%H%M")
     stem = Path(filename).stem
 
-    output_filename = f"{stem}_{output_type}결과_{timestamp}.xlsx"
+    if output_type:
+        output_filename = f"{stem}_{output_type}결과_{timestamp}.xlsx"
+    else:
+        output_filename = f"{stem}결과_{timestamp}.xlsx"
     return work_folder / output_filename
 
 

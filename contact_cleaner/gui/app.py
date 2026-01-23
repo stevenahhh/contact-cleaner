@@ -499,7 +499,7 @@ class ContactCleanerApp(BaseClass):
                 pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
 
-            output_path = create_output_structure("병합", "변환")
+            output_path = create_output_structure("정리")
             save_styled_excel(merged_data, output_path,
                               progress_callback=on_save_progress)
 
@@ -556,7 +556,7 @@ class ContactCleanerApp(BaseClass):
                 pct = int((current / total) * 100) if total > 0 else 0
                 self.after(0, self.progress.update_progress, pct, 100, "저장 중")
 
-            output_path = create_output_structure("병합", "대조")
+            output_path = create_output_structure("대조")
             save_styled_excel(merged_data, output_path,
                               progress_callback=on_save_progress)
 
@@ -643,7 +643,7 @@ class ContactCleanerApp(BaseClass):
                        f"중복 제거 후 {len(merged_data)}개 항목", "INFO")
             self.after(0, self.progress.update_progress, 0, 100, "파일 저장 중")
 
-            output_path = create_output_structure("병합", "최종병합")
+            output_path = create_output_structure("최종병합")
             self._save_merged_excel(merged_data, output_path)
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")
