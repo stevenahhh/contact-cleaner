@@ -71,7 +71,7 @@ def save_comparison_csv(data: list[dict], path: Path) -> None:
         writer.writerows(data)
 
 
-def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> None:
+def save_styled_excel(data: list[dict], path: Path, progress_callback=None, owner_name: str = "") -> None:
     if not data:
         return
 
@@ -89,6 +89,7 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
 
     headers = [
         "연번",
+        "주소록 소유자명",
         "이름 (휴대폰에 저장될 이름)",
         "휴대폰번호",
         "추천1(DW)",
@@ -112,9 +113,9 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
         bottom=Side(style="thin"),
     )
 
-    for col_idx in range(1, 9):
+    for col_idx in range(1, 10):
         cell = ws.cell(row=2, column=col_idx)
-        if col_idx == 7:
+        if col_idx == 8:
             cell.font = header_font_red
         else:
             cell.font = header_font
@@ -133,28 +134,30 @@ def save_styled_excel(data: list[dict], path: Path, progress_callback=None) -> N
         verification = item.get("검증", "")
         
         c1 = ws.cell(row=current_row, column=1, value=idx)
-        c2 = ws.cell(row=current_row, column=2, value=name_value)
-        c3 = ws.cell(row=current_row, column=3, value=phone_value)
-        c4 = ws.cell(row=current_row, column=4)
+        c2 = ws.cell(row=current_row, column=2, value=owner_name)
+        c3 = ws.cell(row=current_row, column=3, value=name_value)
+        c4 = ws.cell(row=current_row, column=4, value=phone_value)
         c5 = ws.cell(row=current_row, column=5)
-        c6 = ws.cell(row=current_row, column=6, value=verification)
-        c7 = ws.cell(row=current_row, column=7)
+        c6 = ws.cell(row=current_row, column=6)
+        c7 = ws.cell(row=current_row, column=7, value=verification)
         c8 = ws.cell(row=current_row, column=8)
+        c9 = ws.cell(row=current_row, column=9)
 
-        c1.border = c2.border = c3.border = c4.border = thin_border
-        c5.border = c6.border = c7.border = c8.border = thin_border
-        c1.font = c2.font = c3.font = c4.font = data_font
-        c5.font = c6.font = c7.font = c8.font = data_font
+        c1.border = c2.border = c3.border = c4.border = c5.border = thin_border
+        c6.border = c7.border = c8.border = c9.border = thin_border
+        c1.font = c2.font = c3.font = c4.font = c5.font = data_font
+        c6.font = c7.font = c8.font = c9.font = data_font
         c1.alignment = center_alignment
-        c6.alignment = center_alignment
-        c6.fill = yellow_fill
+        c2.alignment = center_alignment
+        c7.alignment = center_alignment
+        c7.fill = yellow_fill
         
         current_row += 1
     
     if progress_callback:
         progress_callback(total_rows, total_rows)
 
-    widths = {1: 8, 2: 30, 3: 20, 4: 10, 5: 10, 6: 25, 7: 10, 8: 25}
+    widths = {1: 8, 2: 15, 3: 30, 4: 20, 5: 10, 6: 10, 7: 25, 8: 10, 9: 25}
     for col_idx, width in widths.items():
         ws.column_dimensions[get_column_letter(col_idx)].width = width
 

@@ -523,7 +523,7 @@ class ContactCleanerApp(BaseClass):
 
             output_path = create_output_structure("정리", owner_name=owner_name)
             save_styled_excel(merged_data, output_path,
-                              progress_callback=on_save_progress)
+                              progress_callback=on_save_progress, owner_name=owner_name)
 
             self.after(0, self.progress.update_progress, 100, 100, "완료")
             self.after(0, self.log_view.log,
@@ -582,7 +582,7 @@ class ContactCleanerApp(BaseClass):
 
             output_path = create_output_structure("대조", owner_name=owner_name)
             save_styled_excel(merged_data, output_path,
-                              progress_callback=on_save_progress)
+                              progress_callback=on_save_progress, owner_name=owner_name)
 
             stats = {"O": 0, "△(번호)": 0, "△(이름)": 0, "X": 0}
             for row in merged_data:
