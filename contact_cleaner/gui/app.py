@@ -700,7 +700,9 @@ class ContactCleanerApp(BaseClass):
         for key, items in merged.items():
             has_checked = any(item["checked"] for item in items)
             if has_checked:
-                result.append(items[0])
+                # Find the first item where checked=True instead of always using items[0]
+                checked_item = next((item for item in items if item["checked"]), items[0])
+                result.append(checked_item)
 
         return result
 
@@ -795,13 +797,13 @@ class ContactCleanerApp(BaseClass):
         return transformed
 
     def _simple_deduplicate(self, data: list[dict]) -> list[dict]:
-        """Simple deduplication by (name, phone) - for clean function only"""
+        """Simple deduplication by phone only - for clean function only"""
         seen = set()
         result = []
         for item in data:
             name = (item.get("이름") or "").strip()
             phone = item.get("변환됨", "")
-            key = (name, phone)
+            key = phone  # Deduplicate by phone only, keep first occurrence
             if key not in seen:
                 seen.add(key)
                 result.append({
@@ -914,16 +916,8 @@ class ContactCleanerApp(BaseClass):
                 "검증": "X",
             })
 
-        # Add unmatched right items
-        for idx, right_item in enumerate(right_data):
-            if idx not in matched_right_indices:
-                result.append({
-                    "이름": right_item["이름"].strip() if right_item["이름"] else "",
-                    "원본 전화번호": "",
-                    "변환됨": right_item["변환됨"],
-                    "검증": "X",
-                })
-
+        # Do NOT add unmatched right items - comparison should only output left_data items
+        
         return result
 
     def _load_reference_data(self, target_files) -> tuple[dict, list]:
