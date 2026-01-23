@@ -33,6 +33,7 @@ class ColumnDetector:
     ]
     
     FULL_NAME_PATTERNS = [
+        "이름 (휴대폰에 저장될 이름)",
         "Name",
         "name",
         "성명",
@@ -81,9 +82,12 @@ class ColumnDetector:
         rows_iter = ws.iter_rows(values_only=True)
         first_row = next(rows_iter, None)
         
-        # 첫 행이 비어있으면 (정리 결과 파일), 다음 행을 헤더로 사용
-        if first_row and all(cell is None or str(cell).strip() == '' for cell in first_row):
-            header_row = next(rows_iter, None)
+        if first_row and len(first_row) > 0 and first_row[0]:
+            first_cell_text = str(first_row[0]).strip()
+            if first_cell_text.startswith('*'):
+                header_row = next(rows_iter, None)
+            else:
+                header_row = first_row
         else:
             header_row = first_row
 

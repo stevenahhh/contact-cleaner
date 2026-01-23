@@ -512,6 +512,7 @@ class ContactCleanerApp(BaseClass):
                     "※ 원본 주소록 파일을 사용하세요."
                 )
                 self.after(0, self.log_view.log, error_msg, "ERROR")
+                self.after(0, lambda: self.source_list.clear_all())
                 self.after(0, self._unlock_ui)
                 return
 
@@ -543,6 +544,7 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self._on_complete)
         except Exception as e:
             self.after(0, self.log_view.log, f"정리 중 오류: {str(e)}", "ERROR")
+            self.after(0, lambda: self.source_list.clear_all())
             self.after(0, self._unlock_ui)
 
     def _compare_thread(self, source_files, target_files):
@@ -572,6 +574,8 @@ class ContactCleanerApp(BaseClass):
                     "※ 정리/대조 결과 파일이 아닌 원본 주소록 파일을 사용하세요."
                 )
                 self.after(0, self.log_view.log, error_msg, "ERROR")
+                self.after(0, lambda: self.compare_source_list.clear_all())
+                self.after(0, lambda: self.target_list.clear_all())
                 self.after(0, self._unlock_ui)
                 return
 
@@ -625,6 +629,8 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self._on_complete)
         except Exception as e:
             self.after(0, self.log_view.log, f"대조 중 오류: {str(e)}", "ERROR")
+            self.after(0, lambda: self.compare_source_list.clear_all())
+            self.after(0, lambda: self.target_list.clear_all())
             self.after(0, self._unlock_ui)
 
     def _merge_thread(self, merge_files):

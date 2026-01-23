@@ -137,9 +137,10 @@ class ContactProcessor:
                 return ""
             
             for header, value in row.items():
-                # Skip sequence number columns (순번, 번호, No, etc.)
                 header_lower = header.lower().strip()
                 if header_lower in ("순번", "번호", "no", "no.", "#", "index", "순서", "seq"):
+                    continue
+                if "소유자" in header or "owner" in header_lower or "주소록 소유자명" in header:
                     continue
                 
                 from .normalizer import normalize_phone_number
@@ -222,8 +223,12 @@ class ContactProcessor:
             wb.close()
             return []
         
-        if all(cell is None or str(cell).strip() == '' for cell in first_row):
-            header_row = next(rows_iter, None)
+        if len(first_row) > 0 and first_row[0]:
+            first_cell_text = str(first_row[0]).strip()
+            if first_cell_text.startswith('*'):
+                header_row = next(rows_iter, None)
+            else:
+                header_row = first_row
         else:
             header_row = first_row
 
