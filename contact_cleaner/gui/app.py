@@ -61,10 +61,10 @@ class ContactCleanerApp(BaseClass):
             win_width = 1150
             win_height = 950
         else:
-            win_width = 1150
-            win_height = 950
+            win_width = 1000
+            win_height = 850
 
-        self.title("주소록 정리 v1.3.0")
+        self.title("주소록 정리")
         self.geometry(f"{win_width}x{win_height}")
         self.minsize(1000, 850)
         self.resizable(True, True)
@@ -130,8 +130,9 @@ class ContactCleanerApp(BaseClass):
         self.progress = ProgressFrame(bottom_frame)
         self.progress.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
+        from contact_cleaner import __version__, __build_date__
         v_label = ttk.Label(
-            self, text="v1.3.0", font=self.version_font, foreground="#888888"
+            self, text=f"v{__version__} ({__build_date__})", font=self.version_font, foreground="#888888"
         )
         v_label.place(relx=1.0, rely=1.0, x=-10, y=-5, anchor="se")
 
@@ -292,7 +293,7 @@ class ContactCleanerApp(BaseClass):
 
         # Help content
         help_content = [
-            ("title", "주소록 정리 v1.3.0 사용 매뉴얼\n\n"),
+            ("title", "주소록 정리 사용 매뉴얼\n\n"),
             
             ("section", "1. Step 1. 정리 (주소록 정리)\n"),
             ("normal", "원본 주소록 파일의 전화번호를 정규화하고 중복을 제거합니다.\n\n"),
