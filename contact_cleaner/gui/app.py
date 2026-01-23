@@ -569,7 +569,7 @@ class ContactCleanerApp(BaseClass):
             self.after(0, self.progress.update_progress, 100, 100, "완료")
             self.after(0, self.log_view.log,
                        f"대조 완료 (O:{stats['O']}, △(번호):{stats['△(번호)']}, △(이름):{stats['△(이름)']}, X:{stats['X']})", "SUCCESS", str(output_path))
-            self.after(0, lambda: self.source_list.clear_all())
+            self.after(0, lambda: self.compare_source_list.clear_all())
             self.after(0, lambda: self.target_list.clear_all())
             self.after(0, self._on_complete)
         except Exception as e:
